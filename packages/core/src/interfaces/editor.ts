@@ -3,6 +3,7 @@ import { Placement } from "./events";
 import { useInternalEditor } from "../editor/useInternalEditor";
 
 export type Options = {
+  onNodesChange: (Nodes) => any;
   onRender: React.ComponentType<{ render: React.ReactElement }>;
   resolver: Resolver;
   enabled: boolean;
