@@ -15,17 +15,17 @@ describe("<Editor />", () => {
   let actions;
   let component;
   let query;
-  let onNodesChange;
+  let onStateChange;
 
   beforeEach(() => {
     React.useEffect = f => f();
 
     query = { serialize: jest.fn().mockImplementation(() => "{}") };
-    onNodesChange = jest.fn();
+    onStateChange = jest.fn();
     mockStore.mockImplementation(value => ({ ...value, query, actions }));
     act(() => {
       component = shallow(
-        <Editor onNodesChange={onNodesChange}>{children}</Editor>
+        <Editor onStateChange={onStateChange}>{children}</Editor>
       );
     });
   });
@@ -37,8 +37,5 @@ describe("<Editor />", () => {
   });
   it("should have called serialize", () => {
     expect(query.serialize).toHaveBeenCalled();
-  });
-  xit("should call onNodesChange if there is a json", () => {
-    expect(onNodesChange).toHaveBeenCalledWith({});
   });
 });

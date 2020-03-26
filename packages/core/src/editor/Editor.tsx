@@ -7,7 +7,7 @@ import { useEditorStore } from "./store";
 import { EditorContext } from "./EditorContext";
 
 export const withDefaults = (options: Partial<Options> = {}) => ({
-  onNodesChange: () => null,
+  onStateChange: () => null,
   onRender: ({ render }) => render,
   resolver: {},
   nodes: null,
@@ -36,12 +36,12 @@ export const Editor: React.FC<Partial<Options>> = ({
   }, [context, options]);
 
   const json = context && context.query.serialize();
-  const { onNodesChange } = options;
+  const { onStateChange } = options;
   // because `useEffect` doesnt allow for deep comparison, we use this trick.
   // TODO: improve to actually use a deep comparison.
   useEffect(() => {
-    onNodesChange && json && onNodesChange(JSON.parse(json));
-  }, [onNodesChange, json]);
+    onStateChange && json && onStateChange(JSON.parse(json));
+  }, [onStateChange, json]);
 
   return context ? (
     <EditorContext.Provider value={context}>
