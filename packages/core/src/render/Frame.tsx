@@ -6,6 +6,7 @@ import { useInternalEditor } from "../editor/useInternalEditor";
 import invariant from "tiny-invariant";
 
 export type Frame = {
+  /** The initial document defined in a json string */
   json?: string;
 };
 
@@ -25,7 +26,6 @@ export const Frame: React.FC<Frame> = ({ children, json }) => {
   useEffect(() => {
     const { replaceNodes, deserialize } = actions;
     const { createNode } = query;
-
     const {
       initialChildren: children,
       initialJson: json
