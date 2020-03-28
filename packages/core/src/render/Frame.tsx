@@ -1,7 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
 import { NodeElement } from "../nodes/NodeElement";
 import { Canvas } from "../nodes/Canvas";
-import { ROOT_NODE, ERROR_FRAME_IMMEDIATE_NON_CANVAS } from "@craftjs/utils";
+import {
+  ROOT_NODE,
+  ERROR_FRAME_IMMEDIATE_NON_CANVAS
+} from "@candulabs/craft-utils";
 import { useInternalEditor } from "../editor/useInternalEditor";
 import invariant from "tiny-invariant";
 

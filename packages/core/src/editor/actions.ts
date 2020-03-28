@@ -14,7 +14,7 @@ import {
   CallbacksFor,
   QueryCallbacksFor,
   ERROR_NOPARENT
-} from "@craftjs/utils";
+} from "@candulabs/craft-utils";
 import { QueryMethods } from "./query";
 import { updateEventsNode } from "../utils/updateEventsNode";
 import invariant from "tiny-invariant";

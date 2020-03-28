@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { render } from "@testing-library/react";
-import { ERROR_ROOT_CANVAS_NO_ID } from "@craftjs/utils";
+import { ERROR_ROOT_CANVAS_NO_ID } from "@candulabs/craft-utils";
 
 import { Editor } from "../editor";
 import { useEditor } from "../hooks";

@@ -25,7 +25,7 @@ import {
   ERROR_MOVE_TOP_LEVEL_CANVAS,
   ERROR_MOVE_ROOT_NODE,
   ERROR_INVALID_NODE_ID
-} from "@craftjs/utils";
+} from "@candulabs/craft-utils";
 import findPosition from "../events/findPosition";
 import { getDeepNodes } from "../utils/getDeepNodes";
 import { transformJSXToNode } from "../utils/transformJSX";
