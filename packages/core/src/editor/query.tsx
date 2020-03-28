@@ -5,7 +5,8 @@ import {
   Indicator,
   Node,
   Options,
-  NodeInfo
+  NodeInfo,
+  SerializedNodeData
 } from "../interfaces";
 import { serializeNode } from "../utils/serializeNode";
 import { resolveComponent } from "../utils/resolveComponent";
@@ -65,7 +66,7 @@ export function QueryMethods(Editor: EditorState) {
     /**
      * Get simplified editor's Nodes
      */
-    getState(): any {
+    getState(): Record<NodeId, SerializedNodeData> {
       const simplifiedNodes = Object.keys(Editor.nodes).reduce(
         (result: any, id: NodeId) => {
           const {

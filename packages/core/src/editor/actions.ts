@@ -215,7 +215,7 @@ export const Actions = (
       const reducedNodes: Record<NodeId, SerializedNodeData> = JSON.parse(json);
       this.setState(reducedNodes);
     },
-    setState(reducedNodes: any) {
+    setState(reducedNodes: Record<NodeId, SerializedNodeData>) {
       const rehydratedNodes = Object.keys(reducedNodes).reduce(
         (accum: Nodes, id) => {
           const {

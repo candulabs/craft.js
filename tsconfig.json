@@ -12,7 +12,7 @@
       "@candulabs/craft-core/*": [
         "packages/core/src/*"
       ],
-      "@craftjs/layers": [
+      "@candulabs/craft-layers": [
         "packages/layers/src/index"
       ],
       "@candulabs/craft-utils": [
