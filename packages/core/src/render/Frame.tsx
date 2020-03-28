@@ -7,8 +7,11 @@ import {
 } from "@candulabs/craft-utils";
 import { useInternalEditor } from "../editor/useInternalEditor";
 import invariant from "tiny-invariant";
+import { Nodes } from "../interfaces";
 
 export type Frame = {
+  /** The initial document defined in a json string */
+  nodes?: Nodes;
   json?: string;
   // TODO(mat) this can be typed in nicer way
   data?: any;
@@ -24,23 +27,21 @@ export const Frame: React.FC<Frame> = ({ children, json, data }) => {
 
   const initialState = useRef({
     initialChildren: children,
-    initialJson: json,
-    initialData: data
+    initialData: data || (json && JSON.parse(json))
   });
 
   useEffect(() => {
-    const { replaceNodes, deserialize, setState } = actions;
+    const { replaceNodes, setState } = actions;
     const { createNode } = query;
+    const { initialChildren, initialData } = initialState.current;
 
-    const { initialChildren, initialJson, initialData } = initialState.current;
-    if (!!initialJson) {
-      deserialize(initialJson);
-    } else if (!!initialData) {
+    if (initialData) {
       setState(initialData);
-    } else {
+    } else if (initialChildren) {
       const rootCanvas = React.Children.only(
         initialChildren
       ) as React.ReactElement;
+
       invariant(
         rootCanvas.type && rootCanvas.type === Canvas,
         ERROR_FRAME_IMMEDIATE_NON_CANVAS
