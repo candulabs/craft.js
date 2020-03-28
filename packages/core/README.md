@@ -1,3 +1,6 @@
+## Important note!
+This is a fork of official [craft.js](https://github.com/prevwong/craft.js) repo. It's meant for internal @candulabs usage and might introduce some breaking changes. Use at your own risk, for stable version and support, please checkout main repo.
+
 
 <div align="center" style={{d}}>
 <h1>craft.js</h1>
