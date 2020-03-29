@@ -11,7 +11,7 @@ Methods that helps describe a specified `Node`.
 ## Usage
 ### `useEditor`
 ```jsx
-import {useEditor} from "@candulabs/craft-core";
+import {useEditor} from "@craftjs/core";
 
 const TextComponent = () => {
   const { id } = useNode();

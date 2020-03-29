@@ -11,13 +11,13 @@ A Photoshop-like layers panel for your page editor.
 ## Usage
 
 ```bash
-yarn add @candulabs/craft-layers
+yarn add @craftjs/layers
 ```
 
 ```jsx
 import React from "react";
-import {Editor} from "@candulabs/craft-core"
-import {Layers} from "@candulabs/craft-layers"
+import {Editor} from "@craftjs/core"
+import {Layers} from "@craftjs/layers"
 
 export default function App() {
   return (

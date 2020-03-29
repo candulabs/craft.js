@@ -7,14 +7,14 @@ import { Button } from "../components/user/Button";
 import { Card, CardBottom, CardTop } from "../components/user/Card";
 import { Text } from "../components/user/Text";
 import { SettingsPanel } from "../components/SettingsPanel";
-import { Editor, Frame, Canvas } from "@candulabs/craft-core";
+import { Editor, Frame, Canvas } from "@craftjs/core";
 import { Topbar } from "../components/Topbar";
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   root: {
     padding: 0,
-    background: "rgb(252, 253, 253)"
-  }
+    background: "rgb(252, 253, 253)",
+  },
 }));
 export default function App() {
   const classes = useStyles();
