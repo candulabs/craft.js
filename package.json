@@ -16,7 +16,7 @@
     "release:npm": "lerna publish",
     "lerna:release": "yarn lerna:version && yarn lerna:publish",
     "lerna:version": "lerna version --conventional-commits --yes",
-    "lerna:publish": "cross-env NODE_ENV=production lerna publish from-package --yes",
+    "lerna:publish": "lerna publish from-package --yes",
     "test:watch": "jest --watch",
     "test": "jest",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
