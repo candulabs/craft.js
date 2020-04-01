@@ -1532,16 +1532,6 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@candulabs/craft-utils@^0.1.0-beta.3":
-  version "0.1.0-beta.3"
-  resolved "https://registry.npmjs.org/@candulabs/craft-utils/-/craft-utils-0.1.0-beta.3.tgz#b5942b53ddaf9a91612f939b160edd6d7f312788"
-  integrity sha512-sJuPRFF2aDyH7h5YU3UIiCjXs/+d326c3MBgbzSX8ACNQalj4121IPB9Q/f47S2+qtlLdly+tYelqEyc7pDvEA==
-  dependencies:
-    "@types/react" "^16.9.11"
-    immer "^3.1.3"
-    lodash.isequalwith "^4.4.0"
-    tiny-invariant "^1.0.6"
-
 "@cnakazawa/watch@^1.0.3":
   version "1.0.3"
   resolved "https://registry.npmjs.org/@cnakazawa/watch/-/watch-1.0.3.tgz#099139eaec7ebf07a27c1786a3ff64f39464d2ef"
