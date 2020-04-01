@@ -1,8 +1,8 @@
 on: push
-name: Build and Publish
+name: Build, Test, Publish!
 jobs:
   all:
-    name: Build and Publish
+    name: Build, Test, Publish!
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
