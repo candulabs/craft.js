@@ -1,7 +1,8 @@
 on: push
-name: Build, Test, Publish!
+name: Workflow
 jobs:
   all:
+    name: Build, Test, Publish!
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
