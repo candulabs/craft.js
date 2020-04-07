@@ -1,13 +1,18 @@
 import * as actions from "../actions";
 import { produce } from "immer";
+import { QueryMethods } from "../../editor/query";
 import {
+  card,
   documentState,
+  documentWithButtonsState,
+  documentWithCardState,
   documentWithLeafState,
   emptyState,
   leafNode,
+  primaryButton,
   rootNode,
+  secondaryButton,
 } from "../../tests/fixtures";
-import { QueryMethods } from "../../editor/query";
 
 const Actions = (state) => (cb) =>
   produce(state, (draft) => cb(actions.Actions(draft, QueryMethods(state))));
@@ -27,6 +32,43 @@ describe("actions.add", () => {
     );
 
     expect(newState).toEqual(documentWithLeafState);
+  });
+  it("should be able to add the leaf again to the same document", () => {
+    const newState = Actions(documentWithLeafState)((actions) =>
+      actions.add(leafNode, rootNode.id)
+    );
+
+    expect(newState).toEqual(documentWithLeafState);
+  });
+  it("should be able to add two nodes", () => {
+    const newState = Actions(documentState)((actions) =>
+      actions.add([primaryButton, secondaryButton], rootNode.id)
+    );
+
+    expect(newState).toEqual(documentWithButtonsState);
+  });
+});
+
+describe("actions.delete", () => {
+  it("should throw if you try to a non existing node", () => {
+    expect(() => Actions(emptyState)((actions) => actions.delete(leafNode.id)));
+  });
+  it("should throw if you try to delete the root", () => {
+    expect(() => Actions(documentState)((actions) => actions.add(rootNode.id)));
+  });
+  it("should be able to delete leaft from the document", () => {
+    const newState = Actions(documentWithLeafState)((actions) =>
+      actions.delete(leafNode.id)
+    );
+
+    expect(newState).toEqual(documentState);
+  });
+  it("should be able to delete a card", () => {
+    const newState = Actions(documentWithCardState)((actions) =>
+      actions.delete(card.id)
+    );
+
+    expect(newState).toEqual(documentState);
   });
 });
 
