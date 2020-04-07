@@ -21,6 +21,11 @@ import invariant from "tiny-invariant";
 import { deserializeNode } from "../utils/deserializeNode";
 import { createElement } from "react";
 
+// TODO: move to utils folder
+const isCanvas = (node: Node | NodeId) =>
+  node &&
+  (typeof node === "string" ? node.startsWith("canvas-") : node.data.isCanvas);
+
 export const Actions = (
   state: EditorState,
   query: QueryCallbacksFor<typeof QueryMethods>
@@ -28,50 +33,9 @@ export const Actions = (
   const _ = <T extends keyof CallbacksFor<typeof Actions>>(name: T) =>
     Actions(state, query)[name];
   return {
-    setOptions(cb: (options: Partial<Options>) => void) {
-      cb(state.options);
-    },
-    setNodeEvent(eventType: NodeEvents, id: NodeId | null) {
-      const current = state.events[eventType];
-      if (current && id !== current) {
-        state.nodes[current].events[eventType] = false;
-      }
-
-      if (id) {
-        state.nodes[id].events[eventType] = true;
-        state.events[eventType] = id;
-      } else {
-        state.events[eventType] = null;
-      }
-    },
-    replaceNodes(nodes: Nodes) {
-      state.nodes = nodes;
-    },
-    reset() {
-      state.nodes = {};
-      state.events = {
-        dragged: null,
-        selected: null,
-        hovered: null,
-        indicator: null,
-      };
-    },
-    setDOM(id: NodeId, dom: HTMLElement) {
-      invariant(state.nodes[id], ERROR_INVALID_NODEID);
-      state.nodes[id].dom = dom;
-    },
-    setIndicator(indicator: Indicator | null) {
-      if (
-        indicator &&
-        (!indicator.placement.parent.dom ||
-          (indicator.placement.currentNode &&
-            !indicator.placement.currentNode.dom))
-      )
-        return;
-      state.events.indicator = indicator;
-    },
     /**
      * Add a new Node(s) to the editor
+     *
      * @param nodes
      * @param parentId
      * @param onError
@@ -81,15 +45,12 @@ export const Actions = (
       parentId?: NodeId,
       onError?: (err, node) => void
     ) {
-      const isCanvas = (node: Node | NodeId) =>
-        node &&
-        (typeof node === "string"
-          ? node.startsWith("canvas-")
-          : node.data.isCanvas);
-
-      if (!Array.isArray(nodes)) nodes = [nodes];
-      if (parentId && !state.nodes[parentId].data.nodes && isCanvas(parentId))
+      if (!Array.isArray(nodes)) {
+        nodes = [nodes];
+      }
+      if (parentId && !state.nodes[parentId].data.nodes && isCanvas(parentId)) {
         state.nodes[parentId].data.nodes = [];
+      }
 
       (nodes as Node[]).forEach((node) => {
         const parent = parentId ? parentId : node.data.parent;
@@ -129,34 +90,7 @@ export const Actions = (
         state.nodes[node.id] = node;
       });
     },
-    /**
-     * Move a target Node to a new Parent at a given index
-     * @param targetId
-     * @param newParentId
-     * @param index
-     */
-    move(targetId: NodeId, newParentId: NodeId, index: number) {
-      const targetNode = state.nodes[targetId],
-        currentParentId = targetNode.data.parent!,
-        newParent = state.nodes[newParentId],
-        newParentNodes = newParent.data.nodes;
 
-      query.node(newParentId).isDroppable(targetNode, (err) => {
-        throw new Error(err);
-      });
-
-      const currentParent = state.nodes[currentParentId],
-        currentParentNodes = currentParent.data.nodes!;
-
-      currentParentNodes[currentParentNodes.indexOf(targetId)] = "marked";
-
-      if (newParentNodes) newParentNodes.splice(index, 0, targetId);
-      else newParent.data.nodes = [targetId];
-
-      state.nodes[targetId].data.parent = newParentId;
-      state.nodes[targetId].data.index = index;
-      currentParentNodes.splice(currentParentNodes.indexOf("marked"), 1);
-    },
     /**
      * Delete a Node
      * @param id
@@ -183,23 +117,84 @@ export const Actions = (
       updateEventsNode(state, id, true);
       delete state.nodes[id];
     },
-    /**
-     * Update the props of a Node
-     * @param id
-     * @param cb
-     */
-    setProp(id: NodeId, cb: (props: any) => void) {
-      invariant(state.nodes[id], ERROR_INVALID_NODEID);
-      cb(state.nodes[id].data.props);
+
+    deserialize(json: string) {
+      const reducedNodes: Record<NodeId, SerializedNodeData> = JSON.parse(json);
+      this.setState(reducedNodes);
     },
+
     /**
-     * Hide a Node
-     * @param id
-     * @param bool
+     * Move a target Node to a new Parent at a given index
+     * @param targetId
+     * @param newParentId
+     * @param index
      */
-    setHidden(id: NodeId, bool: boolean) {
-      state.nodes[id].data.hidden = bool;
+    move(targetId: NodeId, newParentId: NodeId, index: number) {
+      const targetNode = state.nodes[targetId],
+        currentParentId = targetNode.data.parent!,
+        newParent = state.nodes[newParentId],
+        newParentNodes = newParent.data.nodes;
+
+      query.node(newParentId).isDroppable(targetNode, (err) => {
+        throw new Error(err);
+      });
+
+      const currentParent = state.nodes[currentParentId],
+        currentParentNodes = currentParent.data.nodes!;
+
+      currentParentNodes[currentParentNodes.indexOf(targetId)] = "marked";
+
+      if (newParentNodes) {
+        newParentNodes.splice(index, 0, targetId);
+      } else {
+        newParent.data.nodes = [targetId];
+      }
+
+      state.nodes[targetId].data.parent = newParentId;
+      state.nodes[targetId].data.index = index;
+      currentParentNodes.splice(currentParentNodes.indexOf("marked"), 1);
     },
+
+    replaceNodes(nodes: Nodes) {
+      state.nodes = nodes;
+    },
+
+    /**
+     * Resets all the editor state.
+     */
+    reset() {
+      state.nodes = {};
+      state.events = {
+        dragged: null,
+        selected: null,
+        hovered: null,
+        indicator: null,
+      };
+    },
+
+    /**
+     * Set editor options via a callback function
+     *
+     * @param cb: function used to set the options.
+     */
+    setOptions(cb: (options: Partial<Options>) => void) {
+      cb(state.options);
+    },
+
+    setNodeEvent(eventType: NodeEvents, id: NodeId | null) {
+      const current = state.events[eventType];
+      if (current && id !== current) {
+        state.nodes[current].events[eventType] = false;
+      }
+
+      if (id) {
+        state.nodes[id].events[eventType] = true;
+        state.events[eventType] = id;
+      } else {
+        state.events[eventType] = null;
+      }
+    },
+
     /**
      * Set custom values to a Node
      * @param id
@@ -211,10 +206,48 @@ export const Actions = (
     ) {
       cb(state.nodes[id].data.custom);
     },
-    deserialize(json: string) {
-      const reducedNodes: Record<NodeId, SerializedNodeData> = JSON.parse(json);
-      this.setState(reducedNodes);
+
+    /**
+     * Given a `id`, it will set the `dom` porperty of that node.
+     *
+     * @param id of the node we want to set
+     * @param dom
+     */
+    setDOM(id: NodeId, dom: HTMLElement) {
+      invariant(state.nodes[id], ERROR_INVALID_NODEID);
+      state.nodes[id].dom = dom;
     },
+
+    setIndicator(indicator: Indicator | null) {
+      if (
+        indicator &&
+        (!indicator.placement.parent.dom ||
+          (indicator.placement.currentNode &&
+            !indicator.placement.currentNode.dom))
+      )
+        return;
+      state.events.indicator = indicator;
+    },
+
+    /**
+     * Hide a Node
+     * @param id
+     * @param bool
+     */
+    setHidden(id: NodeId, bool: boolean) {
+      state.nodes[id].data.hidden = bool;
+    },
+
+    /**
+     * Update the props of a Node
+     * @param id
+     * @param cb
+     */
+    setProp(id: NodeId, cb: (props: any) => void) {
+      invariant(state.nodes[id], ERROR_INVALID_NODEID);
+      cb(state.nodes[id].data.props);
+    },
+
     setState(dehydratedNodes: Record<NodeId, SerializedNodeData>) {
       const rehydratedNodes = Object.keys(dehydratedNodes).reduce(
         (accum: Nodes, id: string) => {
