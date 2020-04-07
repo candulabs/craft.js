@@ -1,4 +1,7 @@
 import {
+  EditorState,
+  EditorEvents,
+  Indicator,
   NodeId,
   Node,
   Nodes,
@@ -6,7 +9,6 @@ import {
   NodeEvents,
   SerializedNodeData,
 } from "../interfaces";
-import { EditorState, Indicator } from "../interfaces";
 import {
   ERROR_INVALID_NODEID,
   ERROR_ROOT_CANVAS_NO_ID,
@@ -20,6 +22,17 @@ import { updateEventsNode } from "../utils/updateEventsNode";
 import invariant from "tiny-invariant";
 import { deserializeNode } from "../utils/deserializeNode";
 import { createElement } from "react";
+
+// TODO: move to a constants folder
+const editorEmptyState = {
+  nodes: {},
+  events: {
+    dragged: null,
+    selected: null,
+    hovered: null,
+    indicator: null,
+  },
+};
 
 // TODO: move to utils folder
 const isCanvas = (node: Node | NodeId) =>
@@ -45,18 +58,22 @@ export const Actions = (
       parentId?: NodeId,
       onError?: (err, node) => void
     ) {
-      if (!Array.isArray(nodes)) {
-        nodes = [nodes];
+      const nodesToAdd = Array.isArray(nodes) ? nodes : [nodes];
+
+      if (parentId) {
+        invariant(state.nodes[parentId], ERROR_INVALID_NODEID);
       }
+      // make sure that the parent has a nodes property
       if (parentId && !state.nodes[parentId].data.nodes && isCanvas(parentId)) {
         state.nodes[parentId].data.nodes = [];
       }
 
-      (nodes as Node[]).forEach((node) => {
-        const parent = parentId ? parentId : node.data.parent;
-        invariant(parent !== null, ERROR_NOPARENT);
+      console.log(nodesToAdd);
+      nodesToAdd.forEach((node) => {
+        const resolvedParentId = parentId || node.data.parent;
+        invariant(resolvedParentId !== null, ERROR_NOPARENT);
 
-        const parentNode = state.nodes[parent!];
+        const parentNode = state.nodes[resolvedParentId];
 
         if (parentNode && isCanvas(node) && !isCanvas(parentNode)) {
           invariant(node.data.props.id, ERROR_ROOT_CANVAS_NO_ID);
@@ -70,12 +87,17 @@ export const Actions = (
             query.node(parentId).isDroppable(node, (err) => {
               error = err;
             });
-            if (error) return onError && onError(error, node);
+            if (error) {
+              return onError && onError(error, node);
+            }
 
-            if (parentNode.data.props.children)
+            if (parentNode.data.props.children) {
               delete parentNode.data.props["children"];
+            }
 
-            if (!parentNode.data.nodes) parentNode.data.nodes = [];
+            if (!parentNode.data.nodes) {
+              parentNode.data.nodes = [];
+            }
             const currentNodes = parentNode.data.nodes;
             currentNodes.splice(
               node.data.index !== undefined
@@ -84,7 +106,7 @@ export const Actions = (
               0,
               node.id
             );
-            node.data.parent = parent;
+            node.data.parent = resolvedParentId;
           }
         }
         state.nodes[node.id] = node;
@@ -155,6 +177,10 @@ export const Actions = (
       currentParentNodes.splice(currentParentNodes.indexOf("marked"), 1);
     },
 
+    replaceEvents(events: EditorEvents) {
+      state.events = events;
+    },
+
     replaceNodes(nodes: Nodes) {
       state.nodes = nodes;
     },
@@ -163,13 +189,8 @@ export const Actions = (
      * Resets all the editor state.
      */
     reset() {
-      state.nodes = {};
-      state.events = {
-        dragged: null,
-        selected: null,
-        hovered: null,
-        indicator: null,
-      };
+      this.replaceNodes({});
+      this.replaceEvents(editorEmptyState.events);
     },
 
     /**
@@ -282,13 +303,8 @@ export const Actions = (
         {}
       );
 
-      state.events = {
-        dragged: null,
-        selected: null,
-        hovered: null,
-        indicator: null,
-      };
-      state.nodes = rehydratedNodes;
+      this.replaceEvents(editorEmptyState.events);
+      this.replaceNodes(rehydratedNodes);
     },
   };
 };
