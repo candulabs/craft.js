@@ -19,7 +19,9 @@ const Actions = (state) => (cb) =>
 
 describe("actions.add", () => {
   it("should throw if we give a parentId that doesnt exist", () => {
-    expect(() => Actions(emptyState)((actions) => actions.add(leafNode)));
+    expect(() =>
+      Actions(emptyState)((actions) => actions.add(leafNode))
+    ).toThrow();
   });
   it("should throw if we create a node that doesnt have a parent and we dont provide a parent ", () => {
     expect(() =>
@@ -46,6 +48,29 @@ describe("actions.add", () => {
     );
 
     expect(newState).toEqual(documentWithButtonsState);
+  });
+});
+
+describe("actions.addNodeAtIndex", () => {
+  it("should throw if we give a parentId that doesnt exist", () => {
+    expect(() =>
+      Actions(emptyState)((actions) => actions.addNodeAtIndex(leafNode))
+    ).toThrow();
+  });
+  it("should throw if we give an invalid index", () => {
+    const state = Actions(documentState);
+    expect(() =>
+      state((actions) => actions.addNodeAtIndex(leafNode, rootNode.id, -1))
+    ).toThrow();
+    expect(() =>
+      state((actions) => actions.addNodeAtIndex(leafNode, rootNode.id, 1))
+    ).toThrow();
+  });
+  it("should be able to add the node at 0", () => {
+    const newState = Actions(documentState)((actions) =>
+      actions.addNodeAtIndex(leafNode, rootNode.id, 0)
+    );
+    expect(newState).toEqual(documentWithLeafState);
   });
 });
 

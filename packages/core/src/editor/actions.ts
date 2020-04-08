@@ -35,226 +35,246 @@ const editorEmptyState = {
 export const Actions = (
   state: EditorState,
   query: QueryCallbacksFor<typeof QueryMethods>
-) => ({
-  /**
-   * Add a new Node(s) to the editor
-   *
-   * @param nodes
-   * @param parentId
-   */
-  add(nodes: Node[] | Node, parentId: NodeId) {
-    invariant(parentId, ERROR_INVALID_NODEID);
-    invariant(state.nodes[parentId], ERROR_INVALID_NODEID);
-    // reset the parent node ids
-    state.nodes[parentId].data.nodes = [];
+) => {
+  /** Helper functions */
+  const addNodeToParentAtIndex = (node: Node, parent: Node, index: number) => {
+    parent.data.nodes.splice(index, 0, node.id);
+    node.data.parent = parent.id;
+    state.nodes[node.id] = node;
+  };
 
-    const nodesToAdd = Array.isArray(nodes) ? nodes : [nodes];
-    nodesToAdd.forEach((node) => {
-      const resolvedParentId = parentId || node.data.parent;
-      invariant(resolvedParentId !== null, ERROR_NOPARENT);
+  const getParentAndValidate = (parentId: NodeId): Node => {
+    invariant(parentId, ERROR_NOPARENT);
+    const parent = state.nodes[parentId];
+    invariant(parent, ERROR_INVALID_NODEID);
+    return parent;
+  };
 
-      const parentNode = state.nodes[resolvedParentId];
-
-      if (parentNode.data.props.children) {
-        delete parentNode.data.props["children"];
+  return {
+    /**
+     * Add a new Node(s) to the editor.
+     *
+     * @param nodes
+     * @param parentId
+     */
+    add(nodes: Node[] | Node, parentId: NodeId) {
+      const parent = getParentAndValidate(parentId);
+      // reset the parent node ids
+      parent.data.nodes = [];
+      if (parent.data.props.children) {
+        delete parent.data.props["children"];
       }
 
-      const parentNodes = parentNode.data.nodes;
-      parentNodes.splice(
-        node.data.index !== undefined ? node.data.index : parentNodes.length,
-        0,
-        node.id
+      const nodesToAdd = Array.isArray(nodes) ? nodes : [nodes];
+      nodesToAdd.forEach((node, index) =>
+        addNodeToParentAtIndex(node, parent, index)
       );
-      node.data.parent = resolvedParentId;
-      state.nodes[node.id] = node;
-    });
-  },
+    },
 
-  /**
-   * Delete a Node
-   * @param id
-   */
-  delete(id: NodeId) {
-    invariant(id !== ROOT_NODE, "Cannot delete Root node");
-    const targetNode = state.nodes[id];
+    /**
+     * Given a Node, it adds it at the correct position among the node children
+     *
+     * @param node
+     * @param parentId
+     * @param index
+     */
+    addNodeAtIndex(node: Node, parentId: NodeId, index: number) {
+      const parent = getParentAndValidate(parentId);
 
-    if (targetNode.data.nodes) {
-      // we deep clone here because otherwise immer will mutate the node
-      // object as we remove nodes
-      [...targetNode.data.nodes].forEach((childId) => this.delete(childId));
-    }
+      invariant(
+        index > -1 && index <= parent.data.nodes.length,
+        "AddNodeAtIndex: index must be between 0 and parentNodeLength inclusive"
+      );
 
-    const parentChildren = state.nodes[targetNode.data.parent].data.nodes!;
-    parentChildren.splice(parentChildren.indexOf(id), 1);
+      addNodeToParentAtIndex(node, parent, index);
+    },
 
-    updateEventsNode(state, id, true);
-    delete state.nodes[id];
-  },
+    /**
+     * Delete a Node
+     * @param id
+     */
+    delete(id: NodeId) {
+      invariant(id !== ROOT_NODE, "Cannot delete Root node");
+      const targetNode = state.nodes[id];
 
-  deserialize(json: string) {
-    const reducedNodes: Record<NodeId, SerializedNodeData> = JSON.parse(json);
-    this.setState(reducedNodes);
-  },
+      if (targetNode.data.nodes) {
+        // we deep clone here because otherwise immer will mutate the node
+        // object as we remove nodes
+        [...targetNode.data.nodes].forEach((childId) => this.delete(childId));
+      }
 
-  /**
-   * Move a target Node to a new Parent at a given index
-   * @param targetId
-   * @param newParentId
-   * @param index
-   */
-  move(targetId: NodeId, newParentId: NodeId, index: number) {
-    const targetNode = state.nodes[targetId],
-      currentParentId = targetNode.data.parent!,
-      newParent = state.nodes[newParentId],
-      newParentNodes = newParent.data.nodes;
+      const parentChildren = state.nodes[targetNode.data.parent].data.nodes!;
+      parentChildren.splice(parentChildren.indexOf(id), 1);
 
-    query.node(newParentId).isDroppable(targetNode, (err) => {
-      throw new Error(err);
-    });
+      updateEventsNode(state, id, true);
+      delete state.nodes[id];
+    },
 
-    const currentParent = state.nodes[currentParentId],
-      currentParentNodes = currentParent.data.nodes!;
+    deserialize(json: string) {
+      const reducedNodes: Record<NodeId, SerializedNodeData> = JSON.parse(json);
+      this.setState(reducedNodes);
+    },
 
-    currentParentNodes[currentParentNodes.indexOf(targetId)] = "marked";
+    /**
+     * Move a target Node to a new Parent at a given index
+     * @param targetId
+     * @param newParentId
+     * @param index
+     */
+    move(targetId: NodeId, newParentId: NodeId, index: number) {
+      const targetNode = state.nodes[targetId],
+        currentParentId = targetNode.data.parent!,
+        newParent = state.nodes[newParentId],
+        newParentNodes = newParent.data.nodes;
 
-    if (newParentNodes) {
-      newParentNodes.splice(index, 0, targetId);
-    } else {
-      newParent.data.nodes = [targetId];
-    }
+      query.node(newParentId).isDroppable(targetNode, (err) => {
+        throw new Error(err);
+      });
 
-    state.nodes[targetId].data.parent = newParentId;
-    state.nodes[targetId].data.index = index;
-    currentParentNodes.splice(currentParentNodes.indexOf("marked"), 1);
-  },
+      const currentParent = state.nodes[currentParentId],
+        currentParentNodes = currentParent.data.nodes!;
 
-  replaceEvents(events: EditorEvents) {
-    state.events = events;
-  },
+      currentParentNodes[currentParentNodes.indexOf(targetId)] = "marked";
 
-  replaceNodes(nodes: Nodes) {
-    state.nodes = nodes;
-  },
+      if (newParentNodes) {
+        newParentNodes.splice(index, 0, targetId);
+      } else {
+        newParent.data.nodes = [targetId];
+      }
 
-  /**
-   * Resets all the editor state.
-   */
-  reset() {
-    this.replaceNodes({});
-    this.replaceEvents(editorEmptyState.events);
-  },
+      state.nodes[targetId].data.parent = newParentId;
+      state.nodes[targetId].data.index = index;
+      currentParentNodes.splice(currentParentNodes.indexOf("marked"), 1);
+    },
 
-  /**
-   * Set editor options via a callback function
-   *
-   * @param cb: function used to set the options.
-   */
-  setOptions(cb: (options: Partial<Options>) => void) {
-    cb(state.options);
-  },
+    replaceEvents(events: EditorEvents) {
+      state.events = events;
+    },
 
-  setNodeEvent(eventType: NodeEvents, id: NodeId | null) {
-    const current = state.events[eventType];
-    if (current && id !== current) {
-      state.nodes[current].events[eventType] = false;
-    }
+    replaceNodes(nodes: Nodes) {
+      state.nodes = nodes;
+    },
 
-    if (id) {
-      state.nodes[id].events[eventType] = true;
-      state.events[eventType] = id;
-    } else {
-      state.events[eventType] = null;
-    }
-  },
+    /**
+     * Resets all the editor state.
+     */
+    reset() {
+      this.replaceNodes({});
+      this.replaceEvents(editorEmptyState.events);
+    },
 
-  /**
-   * Set custom values to a Node
-   * @param id
-   * @param cb
-   */
-  setCustom<T extends NodeId>(
-    id: T,
-    cb: (data: EditorState["nodes"][T]["data"]["custom"]) => void
-  ) {
-    cb(state.nodes[id].data.custom);
-  },
+    /**
+     * Set editor options via a callback function
+     *
+     * @param cb: function used to set the options.
+     */
+    setOptions(cb: (options: Partial<Options>) => void) {
+      cb(state.options);
+    },
 
-  /**
-   * Given a `id`, it will set the `dom` porperty of that node.
-   *
-   * @param id of the node we want to set
-   * @param dom
-   */
-  setDOM(id: NodeId, dom: HTMLElement) {
-    invariant(state.nodes[id], ERROR_INVALID_NODEID);
-    state.nodes[id].dom = dom;
-  },
+    setNodeEvent(eventType: NodeEvents, id: NodeId | null) {
+      const current = state.events[eventType];
+      if (current && id !== current) {
+        state.nodes[current].events[eventType] = false;
+      }
 
-  setIndicator(indicator: Indicator | null) {
-    if (
-      indicator &&
-      (!indicator.placement.parent.dom ||
-        (indicator.placement.currentNode &&
-          !indicator.placement.currentNode.dom))
-    )
-      return;
-    state.events.indicator = indicator;
-  },
+      if (id) {
+        state.nodes[id].events[eventType] = true;
+        state.events[eventType] = id;
+      } else {
+        state.events[eventType] = null;
+      }
+    },
 
-  /**
-   * Hide a Node
-   * @param id
-   * @param bool
-   */
-  setHidden(id: NodeId, bool: boolean) {
-    state.nodes[id].data.hidden = bool;
-  },
+    /**
+     * Set custom values to a Node
+     * @param id
+     * @param cb
+     */
+    setCustom<T extends NodeId>(
+      id: T,
+      cb: (data: EditorState["nodes"][T]["data"]["custom"]) => void
+    ) {
+      cb(state.nodes[id].data.custom);
+    },
 
-  /**
-   * Update the props of a Node
-   * @param id
-   * @param cb
-   */
-  setProp(id: NodeId, cb: (props: any) => void) {
-    invariant(state.nodes[id], ERROR_INVALID_NODEID);
-    cb(state.nodes[id].data.props);
-  },
+    /**
+     * Given a `id`, it will set the `dom` porperty of that node.
+     *
+     * @param id of the node we want to set
+     * @param dom
+     */
+    setDOM(id: NodeId, dom: HTMLElement) {
+      invariant(state.nodes[id], ERROR_INVALID_NODEID);
+      state.nodes[id].dom = dom;
+    },
 
-  setState(dehydratedNodes: Record<NodeId, SerializedNodeData>) {
-    const rehydratedNodes = Object.keys(dehydratedNodes).reduce(
-      (accum: Nodes, id: string) => {
-        const {
-          type: Comp,
-          props,
-          parent,
-          nodes,
-          _childCanvas,
-          isCanvas,
-          hidden,
-          custom,
-        } = deserializeNode(dehydratedNodes[id], state.options.resolver);
+    setIndicator(indicator: Indicator | null) {
+      if (
+        indicator &&
+        (!indicator.placement.parent.dom ||
+          (indicator.placement.currentNode &&
+            !indicator.placement.currentNode.dom))
+      )
+        return;
+      state.events.indicator = indicator;
+    },
 
-        if (!Comp) {
-          return accum;
-        }
+    /**
+     * Hide a Node
+     * @param id
+     * @param bool
+     */
+    setHidden(id: NodeId, bool: boolean) {
+      state.nodes[id].data.hidden = bool;
+    },
 
-        accum[id] = query.createNode(createElement(Comp, props), {
-          id,
-          data: {
-            ...(isCanvas && { isCanvas }),
-            ...(hidden && { hidden }),
+    /**
+     * Update the props of a Node
+     * @param id
+     * @param cb
+     */
+    setProp(id: NodeId, cb: (props: any) => void) {
+      invariant(state.nodes[id], ERROR_INVALID_NODEID);
+      cb(state.nodes[id].data.props);
+    },
+
+    setState(dehydratedNodes: Record<NodeId, SerializedNodeData>) {
+      const rehydratedNodes = Object.keys(dehydratedNodes).reduce(
+        (accum: Nodes, id: string) => {
+          const {
+            type: Comp,
+            props,
             parent,
-            ...(isCanvas && { nodes }),
-            ...(_childCanvas && { _childCanvas }),
+            nodes,
+            _childCanvas,
+            isCanvas,
+            hidden,
             custom,
-          },
-        });
-        return accum;
-      },
-      {}
-    );
+          } = deserializeNode(dehydratedNodes[id], state.options.resolver);
 
-    this.replaceEvents(editorEmptyState.events);
-    this.replaceNodes(rehydratedNodes);
-  },
-});
+          if (!Comp) {
+            return accum;
+          }
+
+          accum[id] = query.createNode(createElement(Comp, props), {
+            id,
+            data: {
+              ...(isCanvas && { isCanvas }),
+              ...(hidden && { hidden }),
+              parent,
+              ...(isCanvas && { nodes }),
+              ...(_childCanvas && { _childCanvas }),
+              custom,
+            },
+          });
+          return accum;
+        },
+        {}
+      );
+
+      this.replaceEvents(editorEmptyState.events);
+      this.replaceNodes(rehydratedNodes);
+    },
+  };
+};
