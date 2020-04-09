@@ -104,8 +104,21 @@ export const Actions = (
         index > -1 && index <= parent.data.nodes.length,
         "AddTreeAtIndex: index must be between 0 and parentNodeLength inclusive"
       );
-
-      invariant(true, "not implemented yet");
+      const node = tree.nodes[tree.rootNodeId];
+      // first, add the node
+      this.addNodeAtIndex(node, parentId, index);
+      if (!node.data.nodes) {
+        return;
+      }
+      // then add all the children
+      const addChild = (childId, index) =>
+        this.addTreeAtIndex(
+          { rootNodeId: childId, nodes: tree.nodes },
+          node.id,
+          index
+        );
+      // we need to deep clone here...
+      [...node.data.nodes].forEach(addChild);
     },
 
     /**

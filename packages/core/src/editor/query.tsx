@@ -34,8 +34,7 @@ import { getDeepNodes } from "../utils/getDeepNodes";
 import { transformJSXToNode } from "../utils/transformJSX";
 
 export function QueryMethods(state: EditorState) {
-  invariant(state, "you must have a state to be able to query");
-  const { options } = state;
+  const options = state && state.options;
 
   const _: () => QueryCallbacksFor<typeof QueryMethods> = () =>
     QueryMethods(state);
