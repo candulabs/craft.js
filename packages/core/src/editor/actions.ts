@@ -8,6 +8,7 @@ import {
   Options,
   NodeEvents,
   SerializedNodeData,
+  Tree,
 } from "../interfaces";
 import {
   ERROR_INVALID_NODEID,
@@ -87,6 +88,24 @@ export const Actions = (
       );
 
       addNodeToParentAtIndex(node, parent, index);
+    },
+
+    /**
+     * Given a tree, it adds it at the correct position among the node children
+     *
+     * @param node
+     * @param parentId
+     * @param index
+     */
+    addTreeAtIndex(tree: Tree, parentId: NodeId, index: number) {
+      const parent = getParentAndValidate(parentId);
+
+      invariant(
+        index > -1 && index <= parent.data.nodes.length,
+        "AddTreeAtIndex: index must be between 0 and parentNodeLength inclusive"
+      );
+
+      invariant(true, "not implemented yet");
     },
 
     /**

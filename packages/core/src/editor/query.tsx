@@ -7,6 +7,7 @@ import {
   Options,
   NodeInfo,
   SerializedNodeData,
+  Tree,
 } from "../interfaces";
 import { serializeNode } from "../utils/serializeNode";
 import { resolveComponent } from "../utils/resolveComponent";
@@ -55,6 +56,11 @@ export function QueryMethods(Editor: EditorState) {
       node.data.name = name;
 
       return node;
+    },
+
+    parseTreeFromReactNode(reactNode: React.ReactNode): Tree | undefined {
+      invariant(true, "not implemented yet");
+      return undefined;
     },
 
     /**

@@ -1,10 +1,10 @@
 import { createShadow } from "./createShadow";
-import { NodeId, Node, Indicator } from "../interfaces";
+import { NodeId, Node, Indicator, Tree } from "../interfaces";
 import { Handlers, ConnectorsForHandlers } from "@candulabs/craft-utils";
 import { debounce } from "debounce";
 import { EditorStore } from "../editor/store";
 
-type DraggedElement = NodeId | Node;
+type DraggedElement = NodeId | Node | Tree;
 
 const event = ({
   name,
@@ -12,7 +12,7 @@ const event = ({
   capture,
 }: {
   name: string;
-  handler: (e: MouseEvent, id: any) => void;
+  handler: (e: MouseEvent, payload: any) => void;
   capture?: boolean;
 }) => (capture ? [name, handler, capture] : [name, handler]);
 const rapidDebounce = (f) => debounce(f, 1);
@@ -135,10 +135,10 @@ export class EventHandlers extends Handlers<
               e.stopPropagation();
               e.stopImmediatePropagation();
 
-              const node = this.store.query.createNode(userElement);
+              const tree = this.store.query.parseTreeFromReactNode(userElement);
 
               EventHandlers.draggedElementShadow = createShadow(e);
-              EventHandlers.draggedElement = node;
+              EventHandlers.draggedElement = tree;
             },
           }),
           event({
@@ -149,7 +149,7 @@ export class EventHandlers extends Handlers<
               const onDropElement = (draggedElement, placement) => {
                 const index =
                   placement.index + (placement.where === "after" ? 1 : 0);
-                this.store.actions.addNodeAtIndex(
+                this.store.actions.addTreeAtIndex(
                   draggedElement,
                   placement.parent.id,
                   index
