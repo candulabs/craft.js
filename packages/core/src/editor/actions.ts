@@ -111,14 +111,18 @@ export const Actions = (
         return;
       }
       // then add all the children
+      const childNodes = node.data.nodes.map((nodeId) => tree.nodes[nodeId]);
       const addChild = (childId, index) =>
         this.addTreeAtIndex(
           { rootNodeId: childId, nodes: tree.nodes },
           node.id,
           index
         );
+
+      const childToAdd = [...node.data.nodes];
       // we need to deep clone here...
-      [...node.data.nodes].forEach(addChild);
+      node.data.nodes = [];
+      childToAdd.forEach(addChild);
     },
 
     /**

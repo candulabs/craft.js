@@ -4,7 +4,7 @@ import { Handlers, ConnectorsForHandlers } from "@candulabs/craft-utils";
 import { debounce } from "debounce";
 import { EditorStore } from "../editor/store";
 
-type DraggedElement = NodeId | Node | Tree;
+type DraggedElement = NodeId | Tree;
 
 const event = ({
   name,
@@ -64,18 +64,22 @@ export class EventHandlers extends Handlers<
           }),
           event({
             name: "dragenter",
-            handler: (e: MouseEvent, id: NodeId) => {
+            handler: (e: MouseEvent, targetId: NodeId) => {
               e.preventDefault();
               e.stopPropagation();
 
-              if (!EventHandlers.draggedElement) {
+              const { draggedElement } = EventHandlers;
+              if (!draggedElement) {
                 return;
               }
 
+              const node = draggedElement.rootNodeId
+                ? draggedElement.nodes[draggedElement.rootNodeId]
+                : draggedElement;
               const { clientX: x, clientY: y } = e;
               const indicator = this.store.query.getDropPlaceholder(
-                EventHandlers.draggedElement,
-                id,
+                node,
+                targetId,
                 { x, y }
               );
 

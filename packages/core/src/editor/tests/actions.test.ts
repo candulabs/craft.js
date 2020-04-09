@@ -1,3 +1,4 @@
+import cloneDeep from "lodash/cloneDeep";
 import * as actions from "../actions";
 import { produce } from "immer";
 import { QueryMethods } from "../../editor/query";
@@ -102,7 +103,7 @@ describe("actions.addTreeAtIndex", () => {
   it("should be able to add a larger tree", () => {
     const tree = {
       rootNodeId: card.id,
-      nodes: { ...documentWithCardState.nodes },
+      nodes: cloneDeep(documentWithCardState.nodes),
     };
     const newState = Actions(documentState)((actions) =>
       actions.addTreeAtIndex(tree, rootNode.id, 0)
@@ -125,7 +126,7 @@ describe("actions.delete", () => {
 
     expect(newState).toEqual(documentState);
   });
-  xit("should be able to delete a card", () => {
+  it("should be able to delete a card", () => {
     const newState = Actions(documentWithCardState)((actions) =>
       actions.delete(card.id)
     );
