@@ -150,10 +150,8 @@ export function QueryMethods(state: EditorState) {
 
     getState(): Record<NodeId, SerializedNodeData> {
       return Object.keys(state.nodes).reduce((result: any, id: NodeId) => {
-        const {
-          data: { ...data },
-        } = state.nodes[id];
-        result[id] = serializeNode({ ...data }, options.resolver);
+        const { data } = state.nodes[id];
+        result[id] = serializeNode(data, options.resolver);
         return result;
       }, {});
     },

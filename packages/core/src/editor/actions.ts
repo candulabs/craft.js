@@ -279,7 +279,7 @@ export const Actions = (
       const rehydratedNodes = Object.keys(dehydratedNodes).reduce(
         (accum: Nodes, id: string) => {
           const {
-            type: Comp,
+            type: Component,
             props,
             parent,
             nodes,
@@ -289,17 +289,17 @@ export const Actions = (
             custom,
           } = deserializeNode(dehydratedNodes[id], state.options.resolver);
 
-          if (!Comp) {
+          if (!Component) {
             return accum;
           }
 
-          accum[id] = query.createNode(createElement(Comp, props), {
+          accum[id] = query.createNode(createElement(Component, props), {
             id,
             data: {
               ...(isCanvas && { isCanvas }),
               ...(hidden && { hidden }),
               parent,
-              ...(isCanvas && { nodes }),
+              ...{ nodes },
               ...(_childCanvas && { _childCanvas }),
               custom,
             },
