@@ -108,8 +108,6 @@ describe("query", () => {
       });
     });
 
-    describe("when there is one leaft", () => {});
-
     describe("when there is a complex tree", () => {
       const node = (
         <div id="root">
