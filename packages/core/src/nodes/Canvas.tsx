@@ -35,6 +35,7 @@ export function Canvas<T extends React.ElementType>({
     actions: { add, setProp },
     query,
     inContext,
+    store,
   } = useInternalEditor();
   const { node, inNodeContext } = useInternalNode((node) => ({
     node: {
@@ -47,6 +48,7 @@ export function Canvas<T extends React.ElementType>({
 
   /** Only create/recreate nodes on the initial render. From there on, the re-renders will be handled by Nodes */
   useEffectOnce(() => {
+    store.history.unwatch();
     const { id: nodeId, data } = node;
     if (inContext && inNodeContext) {
       if (data.isCanvas) {
@@ -96,6 +98,16 @@ export function Canvas<T extends React.ElementType>({
 
     setInitialised(true);
   });
+
+  /*
+   TODO: Using a timeout to renable history for now 
+   because we can't really be sure if the current action has been completed
+  */
+  useEffect(() => {
+    setTimeout(() => {
+      if (initialised) store.history.watch();
+    });
+  }, [initialised, store]);
 
   /**
    *
