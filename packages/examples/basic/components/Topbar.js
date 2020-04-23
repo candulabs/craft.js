@@ -17,9 +17,15 @@ import lz from "lzutf8";
 import copy from "copy-to-clipboard";
 
 export const Topbar = ({ onLoadState }) => {
-  const { actions, query, enabled } = useEditor((state) => ({
-    enabled: state.options.enabled,
-  }));
+  const { actions, query, enabled, undoable, redoable } = useEditor(
+    (state, query) => {
+      return {
+        enabled: state.options.enabled,
+        undoable: query["canUndo"](),
+        redoable: query["canRedo"](),
+      };
+    }
+  );
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState();
@@ -42,6 +48,31 @@ export const Topbar = ({ onLoadState }) => {
             }
             label="Enable"
           />
+          <MaterialButton
+            size="small"
+            variant="outlined"
+            color="secondary"
+            onClick={() => {
+              actions.undo();
+            }}
+            style={{ marginRight: "10px" }}
+            disabled={!undoable}
+          >
+            Undo
+          </MaterialButton>
+
+          <MaterialButton
+            size="small"
+            variant="outlined"
+            color="secondary"
+            onClick={() => {
+              actions.redo();
+            }}
+            style={{ marginRight: "10px" }}
+            disabled={!redoable}
+          >
+            Redo
+          </MaterialButton>
         </Grid>
         <Grid item>
           <MaterialButton
