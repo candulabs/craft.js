@@ -6,7 +6,10 @@ export type EditorStore = SubscriberAndCallbacksFor<typeof Actions>;
 
 export const useEditorStore = (options): EditorStore => {
   return useMethods(
-    Actions,
+    {
+      methods: Actions as any,
+      ignoreHistory: ["setDOM", "setNodeEvent", "setOptions", "setIndicator"],
+    },
     {
       nodes: {},
       events: {
