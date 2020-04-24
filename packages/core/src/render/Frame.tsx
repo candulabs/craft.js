@@ -31,12 +31,12 @@ export const Frame: React.FC<Frame> = ({ children, json, data }) => {
   });
 
   useEffect(() => {
-    const { replaceNodes, setState } = actions;
+    const { silent } = actions;
     const { createNode } = query;
     const { initialChildren, initialData } = initialState.current;
 
     if (initialData) {
-      setState(initialData);
+      silent("setState", initialData);
     } else if (initialChildren) {
       const rootCanvas = React.Children.only(
         initialChildren
@@ -47,7 +47,7 @@ export const Frame: React.FC<Frame> = ({ children, json, data }) => {
         ERROR_FRAME_IMMEDIATE_NON_CANVAS
       );
       const node = createNode(rootCanvas, { id: ROOT_NODE });
-      replaceNodes({ [ROOT_NODE]: node });
+      silent("replaceNodes", { [ROOT_NODE]: node });
     }
 
     setRender(<NodeElement id={ROOT_NODE} />);

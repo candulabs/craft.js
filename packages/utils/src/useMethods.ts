@@ -1,5 +1,5 @@
 // https://github.com/pelotom/use-methods
-import produce, { PatchListener, applyPatches, Patch } from "immer";
+import produce, { applyPatches, Patch } from "immer";
 import { useMemo, useEffect, useRef, useReducer, useCallback } from "react";
 import isEqualWith from "lodash.isequalwith";
 
@@ -28,6 +28,13 @@ export type CallbacksFor<
       [T in ActionUnion<R>["type"]]: (
         ...payload: ActionByType<ActionUnion<R>, T>["payload"]
       ) => void;
+    } & {
+      undo: () => void;
+      redo: () => void;
+      silent: <T extends ActionUnion<R>["type"]>(
+        action: T,
+        ...payload: ActionByType<ActionUnion<R>, T>["payload"]
+      ) => void;
     }
   : never;
 
@@ -38,7 +45,7 @@ export type Methods<S = any, R extends MethodRecordBase<S> = any, Q = any> = (
 
 export type Options<S = any, R extends MethodRecordBase<S> = any, Q = any> = {
   methods: Methods<S, R, Q>;
-  actionsToIgnore: String[];
+  ignoreHistoryForActions: String[];
 };
 
 export type MethodsOrOptions<
@@ -51,6 +58,10 @@ export type MethodRecordBase<S = any> = Record<
   string,
   (...args: any[]) => S extends object ? S | void : S
 >;
+
+export type ActionOptions = {
+  noHistory: Boolean;
+};
 
 export type ActionUnion<R extends MethodRecordBase> = {
   [T in keyof R]: { type: T; payload: Parameters<R[T]> };
@@ -110,21 +121,20 @@ export function useMethods<
 
   const [reducer, methodsFactory] = useMemo(() => {
     let methods: Methods<S, R>;
-    let actionsToIgnore: String[] = [];
+    let ignoreHistoryForActions: String[] = [];
 
     if (typeof methodsOrOptions === "function") {
       methods = methodsOrOptions;
     } else {
       methods = methodsOrOptions.methods;
-      actionsToIgnore = methodsOrOptions.actionsToIgnore;
+      ignoreHistoryForActions = methodsOrOptions.ignoreHistoryForActions;
     }
-
-    // console.log(typeof methodsOrOptions, ignoreHistory);
 
     return [
       (state: S, action: ActionUnion<R>) => {
         const query =
           queryMethods && createQuery(queryMethods, () => state, history);
+
         return (produce as any)(
           state,
           (draft: S) => {
@@ -142,18 +152,23 @@ export function useMethods<
                 break;
               }
 
+              case "silent": {
+                const [type, ...params] = action.payload;
+                methods(draft, query)[type](...params);
+                break;
+              }
               default:
                 methods(draft, query)[action.type](...action.payload);
             }
           },
           (patches, inversePatches) => {
-            // console.log(ignoreHistory.includes(action.type as any), ignoreHistory.indexOf(action.type as any))
             if (
-              [...actionsToIgnore, "undo", "redo"].includes(action.type as any)
+              [...ignoreHistoryForActions, "undo", "redo", "silent"].includes(
+                action.type as any
+              )
             )
               return;
             applyPatches(state, patches);
-            // console.log("action:", action.type)
             history.add(patches, inversePatches, action.type);
           }
         );
@@ -181,12 +196,14 @@ export function useMethods<
       ...Object.keys(methodsFactory(null, null)),
       "undo",
       "redo",
+      "silent",
     ];
+
     return actionTypes.reduce((accum, type) => {
       accum[type] = (...payload) =>
         dispatch({ type, payload } as ActionUnion<R>);
       return accum;
-    }, {} as CallbacksFor<typeof methodsFactory>);
+    }, {} as any);
   }, [methodsFactory]);
 
   const getState = useCallback(() => currState.current, []);
@@ -231,30 +248,18 @@ export function createQuery<Q extends QueryMethods>(
   };
 }
 
-type Timeline = {
+type Timeline = Array<{
   patches: Patch[];
   inversePatches: Patch[];
-};
+}>;
 
 class History {
-  timeline: Timeline[] = [];
+  timeline: Timeline = [];
   pointer = -1;
-  store;
-  watching = false;
   lastChange;
 
-  watch() {
-    this.watching = true;
-  }
-
-  unwatch() {
-    this.watching = false;
-  }
-
   add(patches, inversePatches, action) {
-    // console.log(action);
-    if (!this.isWatching || (patches.length == 0 && inversePatches.length == 0))
-      return;
+    if (patches.length == 0 && inversePatches.length == 0) return;
 
     if (this.canUndo()) {
       const { patches: currPatches } = this.timeline[this.pointer];
@@ -294,17 +299,21 @@ class History {
   }
 
   undo(state) {
-    const { inversePatches } = this.timeline[this.pointer];
-    this.pointer = this.pointer - 1;
-    const applied = applyPatches(state, inversePatches);
-    return applied;
+    if (this.canUndo()) {
+      const { inversePatches } = this.timeline[this.pointer];
+      this.pointer = this.pointer - 1;
+      const applied = applyPatches(state, inversePatches);
+      return applied;
+    }
   }
 
   redo(state) {
-    this.pointer = this.pointer + 1;
-    const { patches } = this.timeline[this.pointer];
-    const applied = applyPatches(state, patches);
-    return applied;
+    if (this.canRedo()) {
+      this.pointer = this.pointer + 1;
+      const { patches } = this.timeline[this.pointer];
+      const applied = applyPatches(state, patches);
+      return applied;
+    }
   }
 }
 

@@ -32,7 +32,7 @@ export function Canvas<T extends React.ElementType>({
 }: Canvas<T>) {
   const id = props.id;
   const {
-    actions: { add, setProp },
+    actions: { setProp, silent },
     query,
     inContext,
     store,
@@ -48,7 +48,6 @@ export function Canvas<T extends React.ElementType>({
 
   /** Only create/recreate nodes on the initial render. From there on, the re-renders will be handled by Nodes */
   useEffectOnce(() => {
-    store.history.unwatch();
     const { id: nodeId, data } = node;
     if (inContext && inNodeContext) {
       if (data.isCanvas) {
@@ -58,7 +57,7 @@ export function Canvas<T extends React.ElementType>({
             query.createNode(jsx)
           );
 
-          add(childNodes, nodeId);
+          silent("add", childNodes, nodeId);
         }
       } else {
         invariant(id, ERROR_ROOT_CANVAS_NO_ID);
@@ -90,7 +89,7 @@ export function Canvas<T extends React.ElementType>({
         );
 
         internalId = rootNode.id;
-        add(rootNode, nodeId);
+        silent("add", rootNode, nodeId);
 
         setInternalId(internalId);
       }
@@ -98,16 +97,6 @@ export function Canvas<T extends React.ElementType>({
 
     setInitialised(true);
   });
-
-  /*
-   TODO: Using a timeout to renable history for now 
-   because we can't really be sure if the current action has been completed
-  */
-  useEffect(() => {
-    setTimeout(() => {
-      if (initialised) store.history.watch();
-    });
-  }, [initialised, store]);
 
   /**
    *
