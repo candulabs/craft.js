@@ -1,5 +1,4 @@
 import { Patch, applyPatches } from "immer";
-import isEqualWith from "lodash.isequalwith";
 
 type Timeline = Array<{
   patches: Patch[];
@@ -11,30 +10,8 @@ export class History {
   pointer = -1;
   lastChange;
 
-  add(patches, inversePatches, action) {
+  add(patches, inversePatches) {
     if (patches.length == 0 && inversePatches.length == 0) return;
-
-    if (this.canUndo()) {
-      const { patches: currPatches } = this.timeline[this.pointer];
-
-      const now = new Date();
-      const diff = (now.getTime() - this.lastChange.getTime()) / 1000;
-
-      // Ignore similar changes that occurs within 2 seconds
-      if (diff < 2 && currPatches.length == patches.length) {
-        const isSimilar = currPatches.every((currPatch, i) => {
-          const { op: currOp, path: currPath } = currPatch;
-          const { op, path } = patches[i];
-
-          if (op == currOp && isEqualWith(path, currPath)) return true;
-          return false;
-        });
-
-        if (isSimilar) {
-          return;
-        }
-      }
-    }
 
     this.pointer = this.pointer + 1;
     this.timeline.length = this.pointer;
