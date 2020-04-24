@@ -38,7 +38,7 @@ export type Methods<S = any, R extends MethodRecordBase<S> = any, Q = any> = (
 
 export type Options<S = any, R extends MethodRecordBase<S> = any, Q = any> = {
   methods: Methods<S, R, Q>;
-  ignoreHistory: String[];
+  actionsToIgnore: String[];
 };
 
 export type MethodsOrOptions<
@@ -110,13 +110,13 @@ export function useMethods<
 
   const [reducer, methodsFactory] = useMemo(() => {
     let methods: Methods<S, R>;
-    let ignoreHistory: String[] = [];
+    let actionsToIgnore: String[] = [];
 
     if (typeof methodsOrOptions === "function") {
       methods = methodsOrOptions;
     } else {
       methods = methodsOrOptions.methods;
-      ignoreHistory = methodsOrOptions.ignoreHistory;
+      actionsToIgnore = methodsOrOptions.actionsToIgnore;
     }
 
     // console.log(typeof methodsOrOptions, ignoreHistory);
@@ -148,7 +148,9 @@ export function useMethods<
           },
           (patches, inversePatches) => {
             // console.log(ignoreHistory.includes(action.type as any), ignoreHistory.indexOf(action.type as any))
-            if ([...ignoreHistory, "undo", "redo"].includes(action.type as any))
+            if (
+              [...actionsToIgnore, "undo", "redo"].includes(action.type as any)
+            )
               return;
             applyPatches(state, patches);
             // console.log("action:", action.type)
@@ -250,7 +252,8 @@ class History {
   }
 
   add(patches, inversePatches, action) {
-    if (!this.watching || (patches.length == 0 && inversePatches.length == 0))
+    // console.log(action);
+    if (!this.isWatching || (patches.length == 0 && inversePatches.length == 0))
       return;
 
     if (this.canUndo()) {
@@ -261,8 +264,8 @@ class History {
 
       // Ignore similar changes that occurs within 2 seconds
       if (diff < 2 && currPatches.length == patches.length) {
-        const isSimilar = currPatches.every((patch, i) => {
-          const { op: currOp, path: currPath } = patch;
+        const isSimilar = currPatches.every((currPatch, i) => {
+          const { op: currOp, path: currPath } = currPatch;
           const { op, path } = patches[i];
 
           if (op == currOp && isEqualWith(path, currPath)) return true;
@@ -275,9 +278,9 @@ class History {
       }
     }
 
-    const pointer = ++this.pointer;
-    this.timeline.length = pointer;
-    this.timeline[pointer] = { patches, inversePatches };
+    this.pointer = this.pointer + 1;
+    this.timeline.length = this.pointer;
+    this.timeline[this.pointer] = { patches, inversePatches };
 
     this.lastChange = new Date();
   }
@@ -292,13 +295,13 @@ class History {
 
   undo(state) {
     const { inversePatches } = this.timeline[this.pointer];
-    this.pointer--;
+    this.pointer = this.pointer - 1;
     const applied = applyPatches(state, inversePatches);
     return applied;
   }
 
   redo(state) {
-    this.pointer++;
+    this.pointer = this.pointer + 1;
     const { patches } = this.timeline[this.pointer];
     const applied = applyPatches(state, patches);
     return applied;

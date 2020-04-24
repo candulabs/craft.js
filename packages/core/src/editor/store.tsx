@@ -8,7 +8,7 @@ export const useEditorStore = (options): EditorStore => {
   return useMethods(
     {
       methods: Actions as any,
-      ignoreHistory: ["setDOM", "setNodeEvent", "setOptions", "setIndicator"],
+      actionsToIgnore: ["setDOM", "setNodeEvent", "setOptions", "setIndicator"],
     },
     {
       nodes: {},
