@@ -2,19 +2,24 @@ import { useMethods, SubscriberAndCallbacksFor } from "@candulabs/craft-utils";
 import { Actions } from "./actions";
 import { QueryMethods } from "./query";
 
-export type EditorStore = SubscriberAndCallbacksFor<typeof Actions>;
+export const ActionMethodsWithConfig = {
+  methods: Actions,
+  ignoreHistoryForActions: [
+    "setDOM",
+    "setNodeEvent",
+    "setOptions",
+    "setIndicator",
+  ] as const,
+};
+
+export type EditorStore = SubscriberAndCallbacksFor<
+  typeof ActionMethodsWithConfig,
+  typeof QueryMethods
+>;
 
 export const useEditorStore = (options): EditorStore => {
   return useMethods(
-    {
-      methods: Actions as any,
-      ignoreHistoryForActions: [
-        "setDOM",
-        "setNodeEvent",
-        "setOptions",
-        "setIndicator",
-      ],
-    },
+    ActionMethodsWithConfig,
     {
       nodes: {},
       events: {
@@ -26,5 +31,5 @@ export const useEditorStore = (options): EditorStore => {
       options,
     },
     QueryMethods
-  );
+  ) as EditorStore;
 };
