@@ -168,8 +168,9 @@ export function useMethods<
                 "redo",
                 "runWithoutHistory",
               ].includes(action.type as any)
-            )
+            ) {
               return;
+            }
 
             applyPatches(state, patches);
             history.add(patches, inversePatches);
