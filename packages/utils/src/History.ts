@@ -8,16 +8,13 @@ type Timeline = Array<{
 export class History {
   timeline: Timeline = [];
   pointer = -1;
-  lastChange;
 
-  add(patches, inversePatches) {
+  add(patches: Patch[], inversePatches: Patch[]) {
     if (patches.length == 0 && inversePatches.length == 0) return;
 
     this.pointer = this.pointer + 1;
     this.timeline.length = this.pointer;
     this.timeline[this.pointer] = { patches, inversePatches };
-
-    this.lastChange = new Date();
   }
 
   canUndo() {
@@ -29,20 +26,21 @@ export class History {
   }
 
   undo(state) {
-    if (this.canUndo()) {
-      const { inversePatches } = this.timeline[this.pointer];
-      this.pointer = this.pointer - 1;
-      const applied = applyPatches(state, inversePatches);
-      return applied;
-    }
+    if (!this.canUndo()) return;
+
+    const { inversePatches } = this.timeline[this.pointer];
+    this.pointer = this.pointer - 1;
+    const applied = applyPatches(state, inversePatches);
+
+    return applied;
   }
 
   redo(state) {
-    if (this.canRedo()) {
-      this.pointer = this.pointer + 1;
-      const { patches } = this.timeline[this.pointer];
-      const applied = applyPatches(state, patches);
-      return applied;
-    }
+    if (!this.canRedo()) return;
+
+    this.pointer = this.pointer + 1;
+    const { patches } = this.timeline[this.pointer];
+    const applied = applyPatches(state, patches);
+    return applied;
   }
 }
