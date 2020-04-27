@@ -4,9 +4,7 @@ import {
 } from "../editor/useInternalEditor";
 import { useMemo } from "react";
 import { NodeId } from "../interfaces";
-
-type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U;
-type Delete<T, U> = Pick<T, Exclude<keyof T, U>>;
+import { Overwrite, Delete } from "@candulabs/craft-utils";
 
 export type useEditor<S = null> = Overwrite<
   useInternalEditor<S>,
