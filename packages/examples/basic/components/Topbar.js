@@ -21,8 +21,8 @@ export const Topbar = ({ onLoadState }) => {
     (state, query) => {
       return {
         enabled: state.options.enabled,
-        undoable: query["canUndo"](),
-        redoable: query["canRedo"](),
+        undoable: query.canUndo(),
+        redoable: query.canRedo(),
       };
     }
   );
