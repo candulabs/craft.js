@@ -11,9 +11,13 @@ export type useEditor<S = null> = Overwrite<
   {
     actions: Delete<
       useInternalEditor<S>["actions"],
-      "setNodeEvent" | "setDOM" | "replaceNodes" | "reset"
+      "setNodeEvent" | "setDOM" | "replaceNodes" | "reset" | "runWithoutHistory"
     > & {
       selectNode: (nodeId: NodeId | null) => void;
+      runWithoutHistory: Delete<
+        useInternalEditor<S>["actions"]["runWithoutHistory"],
+        "replaceNodes" | "reset"
+      >;
     };
     query: Delete<useInternalEditor<S>["query"], "deserialize">;
   }
@@ -29,7 +33,19 @@ export function useEditor<S>(collect: EditorCollector<S>): useEditor<S>;
 export function useEditor<S>(collect?: any): useEditor<S> {
   const {
     connectors,
-    actions: { setDOM, setNodeEvent, replaceNodes, reset, ...EditorActions },
+    actions: {
+      setDOM,
+      setNodeEvent,
+      replaceNodes,
+      reset,
+      runWithoutHistory: {
+        replaceNodes: _,
+        replaceEvents: __,
+        reset: ___,
+        ...runWithoutHistory
+      },
+      ...EditorActions
+    },
     query: { deserialize, ...query },
     store,
     ...collected
@@ -42,6 +58,7 @@ export function useEditor<S>(collect?: any): useEditor<S> {
         setNodeEvent("selected", nodeId);
         setNodeEvent("hovered", null);
       },
+      runWithoutHistory,
     };
   }, [EditorActions, setNodeEvent]);
 
