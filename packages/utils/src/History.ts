@@ -10,7 +10,9 @@ export class History {
   pointer = -1;
 
   add(patches: Patch[], inversePatches: Patch[]) {
-    if (patches.length == 0 && inversePatches.length == 0) return;
+    if (patches.length == 0 && inversePatches.length == 0) {
+      return;
+    }
 
     this.pointer = this.pointer + 1;
     this.timeline.length = this.pointer;
@@ -22,11 +24,13 @@ export class History {
   }
 
   canRedo() {
-    return this.pointer != this.timeline.length - 1;
+    return this.pointer < this.timeline.length - 1;
   }
 
   undo(state) {
-    if (!this.canUndo()) return;
+    if (!this.canUndo()) {
+      return;
+    }
 
     const { inversePatches } = this.timeline[this.pointer];
     this.pointer = this.pointer - 1;
@@ -36,7 +40,9 @@ export class History {
   }
 
   redo(state) {
-    if (!this.canRedo()) return;
+    if (!this.canRedo()) {
+      return;
+    }
 
     this.pointer = this.pointer + 1;
     const { patches } = this.timeline[this.pointer];
