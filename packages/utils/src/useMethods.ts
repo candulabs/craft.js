@@ -52,6 +52,7 @@ export type Methods<S = any, R extends MethodRecordBase<S> = any, Q = any> = (
 export type Options<S = any, R extends MethodRecordBase<S> = any, Q = any> = {
   methods: Methods<S, R, Q>;
   ignoreHistoryForActions: ReadonlyArray<keyof MethodRecordBase>;
+  normalizeHistory?: (state: S) => void;
 };
 
 export type MethodsOrOptions<
@@ -120,12 +121,14 @@ export function useMethods<
 
   let methods: Methods<S, R>;
   let ignoreHistoryForActions = [];
+  let normalizeHistory;
 
   if (typeof methodsOrOptions === "function") {
     methods = methodsOrOptions;
   } else {
     methods = methodsOrOptions.methods;
     ignoreHistoryForActions = methodsOrOptions.ignoreHistoryForActions as any;
+    normalizeHistory = methodsOrOptions.normalizeHistory;
   }
 
   const [reducer, methodsFactory] = useMemo(() => {
@@ -140,13 +143,19 @@ export function useMethods<
             switch (action.type) {
               case "undo": {
                 if (history.canUndo()) {
-                  return history.undo(state);
+                  if (normalizeHistory) {
+                    normalizeHistory(draft);
+                  }
+                  return history.undo(draft);
                 }
                 break;
               }
               case "redo": {
                 if (history.canRedo()) {
-                  return history.redo(state);
+                  if (normalizeHistory) {
+                    normalizeHistory(draft);
+                  }
+                  return history.redo(draft);
                 }
                 break;
               }

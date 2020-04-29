@@ -10,6 +10,18 @@ export const ActionMethodsWithConfig = {
     "setOptions",
     "setIndicator",
   ] as const,
+  normalizeHistory: (state) => {
+    /**
+     * On every undo/redo, we want to reset these values
+     * because their changes are not tracked by the history manager
+     */
+    state.events = {
+      selected: null,
+      dragged: null,
+      hovered: null,
+      indicator: null,
+    };
+  },
 };
 
 export type EditorStore = SubscriberAndCallbacksFor<
