@@ -36,6 +36,7 @@ import { parseNodeDataFromJSX } from "../utils/parseNodeDataFromJSX";
 import { serializeNode } from "../utils/serializeNode";
 import { randomNodeId } from "../utils/randomNodeId";
 import { resolveComponent } from "../utils/resolveComponent";
+import { deserializeNode } from "../utils/deserializeNode";
 
 export function QueryMethods(state: EditorState) {
   const options = state && state.options;
@@ -65,15 +66,18 @@ export function QueryMethods(state: EditorState) {
      * @param nodeData `node.data` property of the future data
      * @param id an optional ID correspondent to the node
      */
-    parseNodeFromSerializedNode(nodeData: NodeData, id?: NodeId): Node {
-      const node = createNode(nodeData, id || randomNodeId());
+    parseNodeFromSerializedNode(
+      nodeData: SerializedNodeData,
+      id?: NodeId
+    ): Node {
+      const data = deserializeNode(nodeData, options.resolver);
 
-      const name = resolveComponent(options.resolver, node.data.type);
-      invariant(name !== null, ERRROR_NOT_IN_RESOLVER);
-      node.data.displayName = node.data.displayName || name;
-      node.data.name = name;
+      invariant(data.type, ERRROR_NOT_IN_RESOLVER);
 
-      return node;
+      return this.parseNodeFromReactNode(
+        React.createElement(data.type, data.props),
+        { id, data }
+      );
     },
 
     parseNodeFromReactNode(
@@ -81,7 +85,15 @@ export function QueryMethods(state: EditorState) {
       extras: any = {}
     ): Node {
       const nodeData = parseNodeDataFromJSX(reactElement, extras.data);
-      return this.parseNodeFromSerializedNode(nodeData, extras.id);
+      // @ts-ignore
+      const node = createNode(nodeData, extras.id || randomNodeId());
+
+      const name = resolveComponent(options.resolver, node.data.type);
+      invariant(name !== null, ERRROR_NOT_IN_RESOLVER);
+      node.data.displayName = node.data.displayName || name;
+      node.data.name = name;
+
+      return node;
     },
 
     parseTreeFromReactNode(reactNode: React.ReactElement): Tree | undefined {
