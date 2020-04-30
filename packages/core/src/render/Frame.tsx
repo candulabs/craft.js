@@ -32,7 +32,7 @@ export const Frame: React.FC<Frame> = ({ children, json, data }) => {
 
   useEffect(() => {
     const { runWithoutHistory } = actions;
-    const { createNode } = query;
+    const { parseNodeFromReactNode } = query;
     const { initialChildren, initialData } = initialState.current;
 
     if (initialData) {
@@ -46,7 +46,7 @@ export const Frame: React.FC<Frame> = ({ children, json, data }) => {
         rootCanvas.type && rootCanvas.type === Canvas,
         ERROR_FRAME_IMMEDIATE_NON_CANVAS
       );
-      const node = createNode(rootCanvas, { id: ROOT_NODE });
+      const node = parseNodeFromReactNode(rootCanvas, { id: ROOT_NODE });
       runWithoutHistory.replaceNodes({ [ROOT_NODE]: node });
     }
 

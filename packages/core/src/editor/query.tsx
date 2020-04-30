@@ -29,6 +29,7 @@ import {
   ERROR_INVALID_NODE_ID,
 } from "@candulabs/craft-utils";
 import findPosition from "../events/findPosition";
+import { deprecatedWarning } from "../utils/deprecatedWarning";
 import { mergeTrees } from "../utils/mergeTrees";
 import { getDeepNodes } from "../utils/getDeepNodes";
 import { transformJSXToNode } from "../utils/transformJSX";
@@ -48,7 +49,17 @@ export function QueryMethods(state: EditorState) {
      * @param reactElement
      * @param extras
      */
-    createNode(reactElement: React.ReactElement | string, extras?: any) {
+    createNode(reactElement: React.ReactElement | string, extras?: any): Node {
+      deprecatedWarning(
+        "Warning: method createNode has been deprecated and it will be removed in the future. Please use parseNodeFromReactNode instead."
+      );
+      return this.parseNodeFromReactNode(reactElement, extras);
+    },
+
+    parseNodeFromReactNode(
+      reactElement: React.ReactElement | string,
+      extras?: any
+    ): Node {
       const node = transformJSXToNode(reactElement, extras);
 
       const name = resolveComponent(options.resolver, node.data.type);
@@ -60,7 +71,7 @@ export function QueryMethods(state: EditorState) {
     },
 
     parseTreeFromReactNode(reactNode: React.ReactElement): Tree | undefined {
-      const node = this.createNode(reactNode);
+      const node = this.parseNodeFromReactNode(reactNode);
       const childrenNodes = React.Children.map(
         (reactNode.props && reactNode.props.children) || [],
         (child) =>
