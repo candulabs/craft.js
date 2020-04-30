@@ -11,7 +11,7 @@ const getReactElement = (elem) => {
   return elem;
 };
 
-export const transformJSXToNode = (
+export const parseNodeDataFromJSX = (
   elem: React.ReactElement | string,
   data: Partial<NodeData> = {}
 ): Partial<NodeData> => {

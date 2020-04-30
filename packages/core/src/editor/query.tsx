@@ -32,7 +32,7 @@ import { createNode } from "../utils/createNode";
 import { deprecatedWarning } from "../utils/deprecatedWarning";
 import { mergeTrees } from "../utils/mergeTrees";
 import { getDeepNodes } from "../utils/getDeepNodes";
-import { transformJSXToNode } from "../utils/transformJSXToNode";
+import { parseNodeDataFromJSX } from "../utils/parseNodeDataFromJSX";
 import { serializeNode } from "../utils/serializeNode";
 import { randomNodeId } from "../utils/randomNodeId";
 import { resolveComponent } from "../utils/resolveComponent";
@@ -59,6 +59,12 @@ export function QueryMethods(state: EditorState) {
       return this.parseNodeFromReactNode(reactElement, extras);
     },
 
+    /**
+     * Given a `nodeData` and an optional Id, it will parse a new `Node`
+     *
+     * @param nodeData `node.data` property of the future data
+     * @param id an optional ID correspondent to the node
+     */
     parseNodeFromSerializedNode(nodeData: NodeData, id?: NodeId): Node {
       const node = createNode(nodeData, id || randomNodeId());
 
@@ -74,7 +80,7 @@ export function QueryMethods(state: EditorState) {
       reactElement: React.ReactElement | string,
       extras: any = {}
     ): Node {
-      const nodeData = transformJSXToNode(reactElement, extras.data);
+      const nodeData = parseNodeDataFromJSX(reactElement, extras.data);
       return this.parseNodeFromSerializedNode(nodeData, extras.id);
     },
 

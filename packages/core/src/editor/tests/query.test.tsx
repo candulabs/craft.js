@@ -12,8 +12,8 @@ import {
 jest.mock("../../utils/resolveComponent", () => ({
   resolveComponent: () => null,
 }));
-jest.mock("../../utils/transformJSXToNode", () => ({
-  transformJSXToNode: () => ({ ...rootNode.data, type: "div" }),
+jest.mock("../../utils/parseNodeDataFromJSX", () => ({
+  parseNodeDataFromJSX: () => ({ ...rootNode.data, type: "div" }),
 }));
 
 describe("query", () => {
