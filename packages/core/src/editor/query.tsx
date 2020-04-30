@@ -8,9 +8,8 @@ import {
   NodeInfo,
   SerializedNodeData,
   Tree,
+  NodeData,
 } from "../interfaces";
-import { serializeNode } from "../utils/serializeNode";
-import { resolveComponent } from "../utils/resolveComponent";
 import invariant from "tiny-invariant";
 import {
   QueryCallbacksFor,
@@ -29,10 +28,14 @@ import {
   ERROR_INVALID_NODE_ID,
 } from "@candulabs/craft-utils";
 import findPosition from "../events/findPosition";
+import { createNode } from "../utils/createNode";
 import { deprecatedWarning } from "../utils/deprecatedWarning";
 import { mergeTrees } from "../utils/mergeTrees";
 import { getDeepNodes } from "../utils/getDeepNodes";
-import { transformJSXToNode } from "../utils/transformJSX";
+import { transformJSXToNode } from "../utils/transformJSXToNode";
+import { serializeNode } from "../utils/serializeNode";
+import { randomNodeId } from "../utils/randomNodeId";
+import { resolveComponent } from "../utils/resolveComponent";
 
 export function QueryMethods(state: EditorState) {
   const options = state && state.options;
@@ -56,11 +59,8 @@ export function QueryMethods(state: EditorState) {
       return this.parseNodeFromReactNode(reactElement, extras);
     },
 
-    parseNodeFromReactNode(
-      reactElement: React.ReactElement | string,
-      extras?: any
-    ): Node {
-      const node = transformJSXToNode(reactElement, extras);
+    parseNodeFromSerializedNode(nodeData: NodeData, id?: NodeId): Node {
+      const node = createNode(nodeData, id || randomNodeId());
 
       const name = resolveComponent(options.resolver, node.data.type);
       invariant(name !== null, ERRROR_NOT_IN_RESOLVER);
@@ -68,6 +68,14 @@ export function QueryMethods(state: EditorState) {
       node.data.name = name;
 
       return node;
+    },
+
+    parseNodeFromReactNode(
+      reactElement: React.ReactElement | string,
+      extras: any = {}
+    ): Node {
+      const nodeData = transformJSXToNode(reactElement, extras.data);
+      return this.parseNodeFromSerializedNode(nodeData, extras.id);
     },
 
     parseTreeFromReactNode(reactNode: React.ReactElement): Tree | undefined {

@@ -1,6 +1,5 @@
 import React from "react";
 import { resolveComponent } from "../../utils/resolveComponent";
-import { transformJSXToNode } from "../../utils/transformJSX";
 import { QueryMethods } from "../query";
 import {
   rootNode,
@@ -13,8 +12,8 @@ import {
 jest.mock("../../utils/resolveComponent", () => ({
   resolveComponent: () => null,
 }));
-jest.mock("../../utils/transformJSX", () => ({
-  transformJSXToNode: () => null,
+jest.mock("../../utils/transformJSXToNode", () => ({
+  transformJSXToNode: () => ({ ...rootNode.data, type: "div" }),
 }));
 
 describe("query", () => {
@@ -32,20 +31,17 @@ describe("query", () => {
     const node = <h1>Hello</h1>;
     const name = "Document";
     let newNode;
+    const nodeData = { ...rootNode.data, type: "div" };
 
     describe("when we can resolve the type", () => {
       beforeEach(() => {
-        transformJSXToNode = jest.fn().mockImplementation(() => rootNode);
         resolveComponent = jest.fn().mockImplementation(() => name);
         newNode = query.parseNodeFromReactNode(node, extras);
-      });
-      it("should call transformJSXToNode with the right arguments", () => {
-        expect(transformJSXToNode).toHaveBeenCalledWith(node, extras);
       });
       it("should have called the resolveComponent", () => {
         expect(resolveComponent).toHaveBeenCalledWith(
           state.options.resolver,
-          rootNode.data.type
+          nodeData.type
         );
       });
       it("should have changed the displayName and name of the node", () => {
@@ -55,7 +51,6 @@ describe("query", () => {
 
     describe("when we cant resolve a name", () => {
       beforeEach(() => {
-        transformJSXToNode = jest.fn().mockImplementation(() => rootNode);
         resolveComponent = jest.fn().mockImplementation(() => null);
       });
       it("should throw an error", () => {
