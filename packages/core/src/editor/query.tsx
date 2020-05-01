@@ -35,7 +35,7 @@ import { mergeTrees } from "../utils/mergeTrees";
 import { getDeepNodes } from "../utils/getDeepNodes";
 import { parseNodeDataFromJSX } from "../utils/parseNodeDataFromJSX";
 import { serializeNode } from "../utils/serializeNode";
-import { randomNodeId } from "../utils/randomNodeId";
+import { getRandomNodeId } from "../utils/getRandomNodeId";
 import { resolveComponent } from "../utils/resolveComponent";
 import { deserializeNode } from "../utils/deserializeNode";
 
@@ -87,7 +87,7 @@ export function QueryMethods(state: EditorState) {
     ): Node {
       const nodeData = parseNodeDataFromJSX(reactElement, extras.data);
       // @ts-ignore
-      const node = createNode(nodeData, extras.id || randomNodeId());
+      const node = createNode(nodeData, extras.id || getRandomNodeId());
 
       const name = resolveComponent(options.resolver, node.data.type);
       invariant(name !== null, ERRROR_NOT_IN_RESOLVER);
