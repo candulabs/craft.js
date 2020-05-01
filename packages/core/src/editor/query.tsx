@@ -29,6 +29,7 @@ import {
 } from "@candulabs/craft-utils";
 import findPosition from "../events/findPosition";
 import { createNode } from "../utils/createNode";
+import { fromEntries } from "../utils/fromEntries";
 import { deprecatedWarning } from "../utils/deprecatedWarning";
 import { mergeTrees } from "../utils/mergeTrees";
 import { getDeepNodes } from "../utils/getDeepNodes";
@@ -193,7 +194,7 @@ export function QueryMethods(state: EditorState) {
         id,
         this.serializeNode(state.nodes[id]),
       ]);
-      return Object.fromEntries(nodePairs);
+      return fromEntries(nodePairs);
     },
 
     /**

@@ -17,6 +17,7 @@ import {
   ERROR_NOPARENT,
 } from "@candulabs/craft-utils";
 import { QueryMethods } from "./query";
+import { fromEntries } from "../utils/fromEntries";
 import { updateEventsNode } from "../utils/updateEventsNode";
 import invariant from "tiny-invariant";
 import { deserializeNode } from "../utils/deserializeNode";
@@ -281,7 +282,7 @@ export const Actions = (
         query.parseNodeFromSerializedNode(dehydratedNodes[id], id),
       ]);
 
-      this.replaceNodes(Object.fromEntries(nodePairs));
+      this.replaceNodes(fromEntries(nodePairs));
       this.replaceEvents(editorEmptyState.events);
     },
   };
