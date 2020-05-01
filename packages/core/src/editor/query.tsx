@@ -185,12 +185,15 @@ export function QueryMethods(state: EditorState) {
       return options;
     },
 
+    /**
+     * Returns all the `nodes` in a serialized format
+     */
     getState(): Record<NodeId, SerializedNodeData> {
-      return Object.keys(state.nodes).reduce((result: any, id: NodeId) => {
-        const { data } = state.nodes[id];
-        result[id] = serializeNode(data, options.resolver);
-        return result;
-      }, {});
+      const nodePairs = Object.keys(state.nodes).map((id: NodeId) => [
+        id,
+        this.serializeNode(state.nodes[id]),
+      ]);
+      return Object.fromEntries(nodePairs);
     },
 
     /**
@@ -305,6 +308,15 @@ export function QueryMethods(state: EditorState) {
      */
     serialize(): string {
       return JSON.stringify(this.getState());
+    },
+
+    /**
+     * Given a Node, it serializes it to its node data. Useful if you need to compare state of different nodes.
+     *
+     * @param node
+     */
+    serializeNode(node: Node): SerializedNodeData {
+      return serializeNode(node.data, options.resolver);
     },
   };
 }

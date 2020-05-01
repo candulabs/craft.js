@@ -49,7 +49,9 @@ export const deserializeComp = (
     return result;
   }, {});
 
-  if (index) props.key = index;
+  if (index) {
+    props.key = index;
+  }
 
   const jsx = {
     ...React.createElement(main, {

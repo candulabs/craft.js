@@ -1,13 +1,12 @@
-import React from "react";
+import React, { Fragment } from "react";
 import { parseNodeDataFromJSX } from "../parseNodeDataFromJSX";
+
+const Component = ({ href }) => <a href={href}>Hi</a>;
 
 describe("parseNodeDataFromJSX", () => {
   const props = { href: "href" };
 
-  it("should transform a div correctly", () => {
-    expect(parseNodeDataFromJSX("div")).toEqual({ type: "div", props: {} });
-  });
-  it("should transform a custom node correctly", () => {
+  it("should transform a link correctly", () => {
     expect(parseNodeDataFromJSX(<a {...props} />)).toEqual({
       type: "a",
       props,
@@ -20,6 +19,27 @@ describe("parseNodeDataFromJSX", () => {
       props: {
         ...props,
         ...extraData.props,
+      },
+    });
+  });
+  it("should be able to parse a component correctly", () => {
+    expect(parseNodeDataFromJSX(<Component {...props} />)).toEqual({
+      type: Component,
+      props,
+    });
+  });
+  it("should transform text with `div` correctly", () => {
+    expect(parseNodeDataFromJSX("div")).toEqual({
+      type: Fragment,
+      props: { children: "div" },
+    });
+  });
+  it("should be able to parse plain text correctly", () => {
+    const text = "hello there";
+    expect(parseNodeDataFromJSX(text)).toEqual({
+      type: Fragment,
+      props: {
+        children: text,
       },
     });
   });

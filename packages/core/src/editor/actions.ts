@@ -278,7 +278,7 @@ export const Actions = (
     setState(dehydratedNodes: Record<NodeId, SerializedNodeData>) {
       const nodePairs = Object.keys(dehydratedNodes).map((id) => [
         id,
-        query.parseNodeFromSerializedNode(dehydratedNodes[id]),
+        query.parseNodeFromSerializedNode(dehydratedNodes[id], id),
       ]);
 
       this.replaceNodes(Object.fromEntries(nodePairs));
