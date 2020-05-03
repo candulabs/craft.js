@@ -1,5 +1,5 @@
 // https://github.com/pelotom/use-methods
-import produce, { applyPatches } from "immer";
+import produce, { applyPatches, produceWithPatches } from "immer";
 import { useMemo, useEffect, useRef, useReducer, useCallback } from "react";
 import isEqualWith from "lodash.isequalwith";
 import { History } from "./History";
@@ -115,7 +115,8 @@ export function useMethods<
 >(
   methodsOrOptions: MethodsOrOptions<S, R>,
   initialState: any,
-  queryMethods?: Q
+  queryMethods?: Q,
+  patchListener?: any
 ): SubscriberAndCallbacksFor<MethodsOrOptions<S, R>, Q> {
   const history = useMemo(() => new History(), []);
 
@@ -137,54 +138,62 @@ export function useMethods<
         const query =
           queryMethods && createQuery(queryMethods, () => state, history);
 
-        return (produce as any)(
-          state,
-          (draft: S) => {
-            switch (action.type) {
-              case "undo": {
-                if (history.canUndo()) {
-                  if (normalizeHistory) {
-                    normalizeHistory(draft);
-                  }
-                  return history.undo(draft);
+        let finalState;
+        const [
+          nextState,
+          patches,
+          inversePatches,
+        ] = (produceWithPatches as any)(state, (draft: S) => {
+          switch (action.type) {
+            case "undo": {
+              if (history.canUndo()) {
+                if (normalizeHistory) {
+                  normalizeHistory(draft);
                 }
-                break;
+                return history.undo(draft);
               }
-              case "redo": {
-                if (history.canRedo()) {
-                  if (normalizeHistory) {
-                    normalizeHistory(draft);
-                  }
-                  return history.redo(draft);
-                }
-                break;
-              }
-
-              case "runWithoutHistory": {
-                const [type, ...params] = action.payload;
-                methods(draft, query)[type](...params);
-                break;
-              }
-              default:
-                methods(draft, query)[action.type](...action.payload);
+              break;
             }
-          },
-          (patches, inversePatches) => {
-            if (
-              [
-                ...ignoreHistoryForActions,
-                "undo",
-                "redo",
-                "runWithoutHistory",
-              ].includes(action.type as any)
-            ) {
-              return;
+            case "redo": {
+              if (history.canRedo()) {
+                if (normalizeHistory) {
+                  normalizeHistory(draft);
+                }
+                return history.redo(draft);
+              }
+              break;
             }
 
-            applyPatches(state, patches);
-            history.add(patches, inversePatches);
+            case "runWithoutHistory": {
+              const [type, ...params] = action.payload;
+              methods(draft, query)[type](...params);
+              break;
+            }
+            default:
+              methods(draft, query)[action.type](...action.payload);
           }
-        );
+        });
+
+        finalState = nextState;
+
+        if (patchListener) {
+          finalState = produce(nextState, (draft) => {
+            patchListener(patches, draft, action.payload);
+          });
+        }
+
+        if (
+          ![
+            ...ignoreHistoryForActions,
+            "undo",
+            "redo",
+            "runWithoutHistory",
+          ].includes(action.type as any)
+        ) {
+          history.add(patches, inversePatches);
+        }
+
+        return finalState;
       },
       methods,
     ];

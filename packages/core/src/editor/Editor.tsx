@@ -1,10 +1,11 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
 import { Options } from "../interfaces";
 import { Events } from "../events";
 
 import { useEditorStore } from "./store";
 import { EditorContext } from "./EditorContext";
+import { original } from "immer";
 
 export const withDefaults = (options: Partial<Options> = {}) => ({
   onStateChange: () => null,
@@ -26,7 +27,31 @@ export const Editor: React.FC<Partial<Options>> = ({
   children,
   ...options
 }) => {
-  const context = useEditorStore(withDefaults(options));
+  const initialised = useRef(false);
+
+  const context = useEditorStore(
+    withDefaults(options),
+    (patches, draft, type) => {
+      if (!initialised.current) {
+        return;
+      }
+
+      for (let i = 0; i < patches.length; i++) {
+        const { path, value } = patches[i];
+        // If data is modified:
+        if (path.length > 2 && path[0] == "nodes" && path[2] == "data") {
+          // Object.keys(draft.nodes).forEach(id => {
+          //   const node = draft.nodes[id];
+          //   if ( node.data.name == "Button" ) {
+          //     node.data.props.size = "large";
+          //   }
+          // })
+          console.log("changed!", patches[i], type);
+          break;
+        }
+      }
+    }
+  );
 
   useEffect(() => {
     if (context && options)
@@ -41,6 +66,8 @@ export const Editor: React.FC<Partial<Options>> = ({
         json: context.query.serialize(),
       }),
       ({ json }) => {
+        initialised.current = true;
+        console.log("test");
         context.query.getOptions().onStateChange(JSON.parse(json));
       }
     );

@@ -6,6 +6,7 @@ type UserComponentConfig<T> = {
   name: string;
   rules: Partial<NodeRules>;
   related: Partial<NodeRelated>;
+  normalise: NodeNormaliseCreator;
   defaultProps: Partial<T>;
 };
 
@@ -32,6 +33,15 @@ export type NodeRules = {
   canMoveIn(canMoveIn: Node, self: Node, helpers: NodeHelpers): boolean;
   canMoveOut(canMoveOut: Node, self: Node, helpers: NodeHelpers): boolean;
 };
+export type NodeNormalise = {
+  onAdd(): void;
+  onDelete(): void;
+  onMove(): void;
+  onChildAdd(child: Node): void;
+  onChildRemove(child: Node): void;
+  onChildMove(child: Node): void;
+};
+export type NodeNormaliseCreator = (node: Node, query: any) => NodeNormalise;
 export type NodeRelated = Record<string, React.ElementType>;
 
 export type NodeData = {

@@ -22,14 +22,14 @@ export const ActionMethodsWithConfig = {
       indicator: null,
     };
   },
-};
+} as any;
 
 export type EditorStore = SubscriberAndCallbacksFor<
   typeof ActionMethodsWithConfig,
   typeof QueryMethods
 >;
 
-export const useEditorStore = (options): EditorStore => {
+export const useEditorStore = (options, patchListener): EditorStore => {
   return useMethods(
     ActionMethodsWithConfig,
     {
@@ -42,6 +42,7 @@ export const useEditorStore = (options): EditorStore => {
       },
       options,
     },
-    QueryMethods
+    QueryMethods,
+    patchListener
   ) as EditorStore;
 };
