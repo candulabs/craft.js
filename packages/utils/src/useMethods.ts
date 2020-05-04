@@ -1,5 +1,5 @@
 // https://github.com/pelotom/use-methods
-import produce, { applyPatches, produceWithPatches } from "immer";
+import produce, { applyPatches, Patch, produceWithPatches } from "immer";
 import { useMemo, useEffect, useRef, useReducer, useCallback } from "react";
 import isEqualWith from "lodash.isequalwith";
 import { History } from "./History";
@@ -93,6 +93,18 @@ export type QueryCallbacksFor<M extends QueryMethods> = M extends QueryMethods<
     } & { canUndo: () => boolean; canRedo: () => boolean }
   : never;
 
+export type PatchListenerAction<S, M extends MethodsOrOptions> = {
+  type: keyof CallbacksFor<M>;
+  params: any;
+};
+
+export type PatchListener<S, M extends MethodsOrOptions> = (
+  draft: S,
+  previousState: S,
+  actionPerformed: PatchListenerAction<S, M>,
+  patches: Patch[]
+) => void;
+
 export function useMethods<S, R extends MethodRecordBase<S>>(
   methodsOrOptions: Methods<S, R>,
   initialState: any
@@ -106,7 +118,7 @@ export function useMethods<
   methodsOrOptions: MethodsOrOptions<S, R, QueryCallbacksFor<Q>>, // methods to manipulate the state
   initialState: any,
   queryMethods: Q,
-  patchListener: any
+  patchListener: PatchListener<S, MethodsOrOptions<S, R, QueryCallbacksFor<Q>>>
 ): SubscriberAndCallbacksFor<MethodsOrOptions<S, R>, Q>;
 
 export function useMethods<
@@ -179,7 +191,12 @@ export function useMethods<
 
         if (patchListener) {
           finalState = produce(nextState, (draft) => {
-            patchListener(patches, draft, action.payload);
+            patchListener(
+              draft,
+              state,
+              { type: action.type, payload: action.payload },
+              patches
+            );
           });
         }
 

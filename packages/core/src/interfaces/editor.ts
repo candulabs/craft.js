@@ -1,6 +1,8 @@
 import { Nodes, NodeEvents, NodeId } from "./nodes";
 import { Placement } from "./events";
 import { useInternalEditor } from "../editor/useInternalEditor";
+import { PatchListenerAction } from "@candulabs/craft-utils";
+import { ActionMethodsWithConfig } from "../editor/store";
 
 export type Options = {
   onRender: React.ComponentType<{ render: React.ReactElement }>;
@@ -8,6 +10,14 @@ export type Options = {
   resolver: Resolver;
   enabled: boolean;
   indicator: Record<"success" | "error", string>;
+  normaliseNodes: (
+    state: EditorState,
+    previousState: EditorState,
+    actionPerformed: PatchListenerAction<
+      EditorState,
+      typeof ActionMethodsWithConfig
+    >
+  ) => void;
 };
 
 export type Resolver = Record<string, string | React.ElementType>;

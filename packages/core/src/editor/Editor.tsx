@@ -25,29 +25,19 @@ export const withDefaults = (options: Partial<Options> = {}) => ({
  */
 export const Editor: React.FC<Partial<Options>> = ({
   children,
+  normaliseNodes,
   ...options
 }) => {
-  const initialised = useRef(false);
-
   const context = useEditorStore(
     withDefaults(options),
-    (patches, draft, type) => {
-      if (!initialised.current) {
-        return;
-      }
-
+    (draft, previousState, action, patches) => {
       for (let i = 0; i < patches.length; i++) {
-        const { path, value } = patches[i];
-        // If data is modified:
+        const { path } = patches[i];
         if (path.length > 2 && path[0] == "nodes" && path[2] == "data") {
-          // Object.keys(draft.nodes).forEach(id => {
-          //   const node = draft.nodes[id];
-          //   if ( node.data.name == "Button" ) {
-          //     node.data.props.size = "large";
-          //   }
-          // })
-          console.log("changed!", patches[i], type);
-          break;
+          if (normaliseNodes) {
+            normaliseNodes(draft, previousState, action);
+          }
+          break; // we exit the loop as soon as we find a change in node.data
         }
       }
     }
@@ -66,8 +56,6 @@ export const Editor: React.FC<Partial<Options>> = ({
         json: context.query.serialize(),
       }),
       ({ json }) => {
-        console.log("Test");
-        initialised.current = true;
         context.query.getOptions().onStateChange(JSON.parse(json));
       }
     );
