@@ -66,8 +66,8 @@ export const Editor: React.FC<Partial<Options>> = ({
         json: context.query.serialize(),
       }),
       ({ json }) => {
+        console.log("Test");
         initialised.current = true;
-        console.log("test");
         context.query.getOptions().onStateChange(JSON.parse(json));
       }
     );

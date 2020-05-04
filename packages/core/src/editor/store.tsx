@@ -22,7 +22,7 @@ export const ActionMethodsWithConfig = {
       indicator: null,
     };
   },
-} as any;
+};
 
 export type EditorStore = SubscriberAndCallbacksFor<
   typeof ActionMethodsWithConfig,

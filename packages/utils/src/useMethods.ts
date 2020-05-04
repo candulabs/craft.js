@@ -105,7 +105,8 @@ export function useMethods<
 >(
   methodsOrOptions: MethodsOrOptions<S, R, QueryCallbacksFor<Q>>, // methods to manipulate the state
   initialState: any,
-  queryMethods: Q
+  queryMethods: Q,
+  patchListener: any
 ): SubscriberAndCallbacksFor<MethodsOrOptions<S, R>, Q>;
 
 export function useMethods<
