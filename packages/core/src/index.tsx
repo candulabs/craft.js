@@ -5,5 +5,6 @@ export * from "./interfaces";
 export * from "./nodes";
 export * from "./render";
 
-// We expose this methods for candu's internal usage. Use at your own risksi
+// We expose these interfaces for candu's internal usage. Use at your own risksi
 export { useInternalEditor } from "./editor/useInternalEditor";
+export { NodeContext } from "./nodes/NodeContext";
