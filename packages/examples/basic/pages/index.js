@@ -24,22 +24,7 @@ export default function App() {
       <Typography style={{ margin: "20px 0" }} variant="h5" align="center">
         Basic Page Editor
       </Typography>
-      <Editor
-        normaliseNode={(state, actions, query) => {
-          return {
-            onAdd: (node) => {
-              // if ( node.data.displayName == "Button" )
-              //   state.nodes[node.id].data.props.size = "large"
-            },
-            onChildDelete: (node) => {
-              if (state.nodes[node.data.parent].data.type == Container) {
-                state.nodes[node.data.parent].data.props.background = "#333";
-              }
-            },
-          };
-        }}
-        resolver={{ Card, Button, Text, Container, CardTop, CardBottom }}
-      >
+      <Editor resolver={{ Card, Button, Text, Container, CardTop, CardBottom }}>
         <Topbar />
         <Grid container spacing={5} style={{ paddingTop: "10px" }}>
           <Grid item xs>
