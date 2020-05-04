@@ -5,7 +5,6 @@ import { Events } from "../events";
 
 import { useEditorStore } from "./store";
 import { EditorContext } from "./EditorContext";
-import { original } from "immer";
 
 export const withDefaults = (options: Partial<Options> = {}) => ({
   onStateChange: () => null,
