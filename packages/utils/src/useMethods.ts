@@ -96,13 +96,14 @@ export type QueryCallbacksFor<M extends QueryMethods> = M extends QueryMethods<
 export type PatchListenerAction<S, M extends MethodsOrOptions> = {
   type: keyof CallbacksFor<M>;
   params: any;
+  patches: Patch[];
 };
 
-export type PatchListener<S, M extends MethodsOrOptions> = (
+export type PatchListener<S, M extends MethodsOrOptions, Q> = (
   draft: S,
   previousState: S,
   actionPerformed: PatchListenerAction<S, M>,
-  patches: Patch[]
+  query: QueryCallbacksFor<Q>
 ) => void;
 
 export function useMethods<S, R extends MethodRecordBase<S>>(
@@ -118,7 +119,11 @@ export function useMethods<
   methodsOrOptions: MethodsOrOptions<S, R, QueryCallbacksFor<Q>>, // methods to manipulate the state
   initialState: any,
   queryMethods: Q,
-  patchListener: PatchListener<S, MethodsOrOptions<S, R, QueryCallbacksFor<Q>>>
+  patchListener: PatchListener<
+    S,
+    MethodsOrOptions<S, R, QueryCallbacksFor<Q>>,
+    Q
+  >
 ): SubscriberAndCallbacksFor<MethodsOrOptions<S, R>, Q>;
 
 export function useMethods<
@@ -194,8 +199,8 @@ export function useMethods<
             patchListener(
               draft,
               state,
-              { type: action.type, payload: action.payload },
-              patches
+              { type: action.type, payload: action.payload, patches },
+              query
             );
           });
         }
@@ -337,11 +342,9 @@ class Watcher<S> {
 
   notify() {
     // Give unsubscribing the priority. Any better way?
-    setTimeout(() => {
-      for (let i = 0; i < this.subscribers.length; i++) {
-        this.subscribers[i].collect();
-      }
-    });
+    for (let i = 0; i < this.subscribers.length; i++) {
+      this.subscribers[i].collect();
+    }
   }
 }
 

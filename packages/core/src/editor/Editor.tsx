@@ -29,12 +29,13 @@ export const Editor: React.FC<Partial<Options>> = ({
 }) => {
   const context = useEditorStore(
     withDefaults(options),
-    (draft, previousState, action, patches) => {
+    (draft, previousState, actionPerformed, query) => {
+      const { patches, ...action } = actionPerformed;
       for (let i = 0; i < patches.length; i++) {
         const { path } = patches[i];
         if (path.length > 2 && path[0] == "nodes" && path[2] == "data") {
           if (normaliseNodes) {
-            normaliseNodes(draft, previousState, action);
+            normaliseNodes(draft, previousState, action, query);
           }
           break; // we exit the loop as soon as we find a change in node.data
         }
