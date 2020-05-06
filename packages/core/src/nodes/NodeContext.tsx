@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { NodeId } from "../interfaces";
-import { NodeConnectors } from "./NodeHandlers";
+import { NodeConnectors, NodeHandlers } from "./NodeHandlers";
+import { useEventHandler } from "../events";
 
 export const NodeContext = React.createContext<any>(null);
 
@@ -13,9 +14,14 @@ export type NodeProvider = {
 export const NodeProvider: React.FC<NodeProvider> = ({
   id,
   related = false,
-  connectors,
   children,
 }) => {
+  const handlers = useEventHandler();
+  const connectors = useMemo(
+    () => handlers.derive(NodeHandlers, id).connectors(),
+    [handlers, id]
+  );
+
   return (
     <NodeContext.Provider value={{ id, related, connectors }}>
       {children}
