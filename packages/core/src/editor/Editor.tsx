@@ -35,7 +35,7 @@ export const Editor: React.FC<Partial<Options>> = ({
         const { path } = patches[i];
         if (path.length > 2 && path[0] == "nodes" && path[2] == "data") {
           if (normaliseNodes) {
-            normaliseNodes(draft, previousState, action, query);
+            normaliseNodes(draft, previousState, actionPerformed, query);
           }
           break; // we exit the loop as soon as we find a change in node.data
         }
