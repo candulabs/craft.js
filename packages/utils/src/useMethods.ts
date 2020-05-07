@@ -99,10 +99,14 @@ export type PatchListenerAction<S, M extends MethodsOrOptions> = {
   patches: Patch[];
 };
 
-export type PatchListener<S, M extends MethodsOrOptions, Q> = (
+export type PatchListener<
+  S,
+  M extends MethodsOrOptions,
+  Q extends QueryMethods
+> = (
   draft: S,
   previousState: S,
-  actionPerformed: PatchListenerAction<S, M>,
+  actionPerformedWithPatches: PatchListenerAction<S, M>,
   query: QueryCallbacksFor<Q>
 ) => void;
 
@@ -341,9 +345,9 @@ class Watcher<S> {
   }
 
   notify() {
-    for (let i = 0; i < this.subscribers.length; i++) {
-      this.subscribers[i].collect();
-    }
+    this.subscribers.forEach((subscriber) => {
+      subscriber.collect();
+    });
   }
 }
 

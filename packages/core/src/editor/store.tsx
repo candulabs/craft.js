@@ -36,7 +36,11 @@ export type EditorStore = SubscriberAndCallbacksFor<
 
 export const useEditorStore = (
   options,
-  patchListener: PatchListener<EditorState, typeof ActionMethodsWithConfig>
+  patchListener: PatchListener<
+    EditorState,
+    typeof ActionMethodsWithConfig,
+    typeof QueryMethods
+  >
 ): EditorStore => {
   return useMethods(
     ActionMethodsWithConfig,
