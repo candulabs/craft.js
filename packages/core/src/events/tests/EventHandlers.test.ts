@@ -63,7 +63,10 @@ describe("EventHandlers", () => {
       expect(getHandler(select.events, "mousedown")).toBeDefined();
     });
     it("should call setNodeEvent on mousedown", () => {
-      callHandler(select.events, "mousedown")(null, nodeId);
+      callHandler(select.events, "mousedown")(
+        { stopPropagation: jest.fn() },
+        nodeId
+      );
       expect(actions.setNodeEvent).toHaveBeenCalledWith("selected", nodeId);
     });
   });

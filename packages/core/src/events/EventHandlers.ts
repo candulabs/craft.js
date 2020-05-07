@@ -34,10 +34,10 @@ export class EventHandlers extends Handlers<
         events: [
           event({
             name: "mousedown",
-            handler: rapidDebounce((_, id: NodeId) =>
-              this.store.actions.setNodeEvent("selected", id)
-            ),
-            capture: true,
+            handler: (e, id: NodeId) => {
+              e.stopPropagation();
+              this.store.actions.setNodeEvent("selected", id);
+            },
           }),
         ],
       },
