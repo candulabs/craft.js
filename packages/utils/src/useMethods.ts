@@ -1,5 +1,5 @@
 // https://github.com/pelotom/use-methods
-import produce, { applyPatches } from "immer";
+import produce, { Patch, produceWithPatches } from "immer";
 import { useMemo, useEffect, useRef, useReducer, useCallback } from "react";
 import isEqualWith from "lodash.isequalwith";
 import { History } from "./History";
@@ -93,6 +93,23 @@ export type QueryCallbacksFor<M extends QueryMethods> = M extends QueryMethods<
     } & { canUndo: () => boolean; canRedo: () => boolean }
   : never;
 
+export type PatchListenerAction<S, M extends MethodsOrOptions> = {
+  type: keyof CallbacksFor<M>;
+  params: any;
+  patches: Patch[];
+};
+
+export type PatchListener<
+  S,
+  M extends MethodsOrOptions,
+  Q extends QueryMethods
+> = (
+  draft: S,
+  previousState: S,
+  actionPerformedWithPatches: PatchListenerAction<S, M>,
+  query: QueryCallbacksFor<Q>
+) => void;
+
 export function useMethods<S, R extends MethodRecordBase<S>>(
   methodsOrOptions: Methods<S, R>,
   initialState: any
@@ -105,7 +122,12 @@ export function useMethods<
 >(
   methodsOrOptions: MethodsOrOptions<S, R, QueryCallbacksFor<Q>>, // methods to manipulate the state
   initialState: any,
-  queryMethods: Q
+  queryMethods: Q,
+  patchListener: PatchListener<
+    S,
+    MethodsOrOptions<S, R, QueryCallbacksFor<Q>>,
+    Q
+  >
 ): SubscriberAndCallbacksFor<MethodsOrOptions<S, R>, Q>;
 
 export function useMethods<
@@ -115,7 +137,8 @@ export function useMethods<
 >(
   methodsOrOptions: MethodsOrOptions<S, R>,
   initialState: any,
-  queryMethods?: Q
+  queryMethods?: Q,
+  patchListener?: any
 ): SubscriberAndCallbacksFor<MethodsOrOptions<S, R>, Q> {
   const history = useMemo(() => new History(), []);
 
@@ -137,54 +160,67 @@ export function useMethods<
         const query =
           queryMethods && createQuery(queryMethods, () => state, history);
 
-        return (produce as any)(
-          state,
-          (draft: S) => {
-            switch (action.type) {
-              case "undo": {
-                if (history.canUndo()) {
-                  if (normalizeHistory) {
-                    normalizeHistory(draft);
-                  }
-                  return history.undo(draft);
+        let finalState;
+        const [
+          nextState,
+          patches,
+          inversePatches,
+        ] = (produceWithPatches as any)(state, (draft: S) => {
+          switch (action.type) {
+            case "undo": {
+              if (history.canUndo()) {
+                if (normalizeHistory) {
+                  normalizeHistory(draft);
                 }
-                break;
+                return history.undo(draft);
               }
-              case "redo": {
-                if (history.canRedo()) {
-                  if (normalizeHistory) {
-                    normalizeHistory(draft);
-                  }
-                  return history.redo(draft);
-                }
-                break;
-              }
-
-              case "runWithoutHistory": {
-                const [type, ...params] = action.payload;
-                methods(draft, query)[type](...params);
-                break;
-              }
-              default:
-                methods(draft, query)[action.type](...action.payload);
+              break;
             }
-          },
-          (patches, inversePatches) => {
-            if (
-              [
-                ...ignoreHistoryForActions,
-                "undo",
-                "redo",
-                "runWithoutHistory",
-              ].includes(action.type as any)
-            ) {
-              return;
+            case "redo": {
+              if (history.canRedo()) {
+                if (normalizeHistory) {
+                  normalizeHistory(draft);
+                }
+                return history.redo(draft);
+              }
+              break;
             }
 
-            applyPatches(state, patches);
-            history.add(patches, inversePatches);
+            case "runWithoutHistory": {
+              const [type, ...params] = action.payload;
+              methods(draft, query)[type](...params);
+              break;
+            }
+            default:
+              methods(draft, query)[action.type](...action.payload);
           }
-        );
+        });
+
+        finalState = nextState;
+
+        if (patchListener) {
+          finalState = produce(nextState, (draft) => {
+            patchListener(
+              draft,
+              state,
+              { type: action.type, payload: action.payload, patches },
+              query
+            );
+          });
+        }
+
+        if (
+          ![
+            ...ignoreHistoryForActions,
+            "undo",
+            "redo",
+            "runWithoutHistory",
+          ].includes(action.type as any)
+        ) {
+          history.add(patches, inversePatches);
+        }
+
+        return finalState;
       },
       methods,
     ];
@@ -309,11 +345,8 @@ class Watcher<S> {
   }
 
   notify() {
-    // Give unsubscribing the priority. Any better way?
-    setTimeout(() => {
-      for (let i = 0; i < this.subscribers.length; i++) {
-        this.subscribers[i].collect();
-      }
+    this.subscribers.forEach((subscriber) => {
+      subscriber.collect();
     });
   }
 }

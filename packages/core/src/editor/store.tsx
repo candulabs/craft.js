@@ -1,6 +1,11 @@
-import { useMethods, SubscriberAndCallbacksFor } from "@candulabs/craft-utils";
+import {
+  useMethods,
+  SubscriberAndCallbacksFor,
+  PatchListener,
+} from "@candulabs/craft-utils";
 import { Actions } from "./actions";
 import { QueryMethods } from "./query";
+import { EditorState } from "../interfaces";
 
 export const ActionMethodsWithConfig = {
   methods: Actions,
@@ -29,7 +34,14 @@ export type EditorStore = SubscriberAndCallbacksFor<
   typeof QueryMethods
 >;
 
-export const useEditorStore = (options): EditorStore => {
+export const useEditorStore = (
+  options,
+  patchListener: PatchListener<
+    EditorState,
+    typeof ActionMethodsWithConfig,
+    typeof QueryMethods
+  >
+): EditorStore => {
   return useMethods(
     ActionMethodsWithConfig,
     {
@@ -42,6 +54,7 @@ export const useEditorStore = (options): EditorStore => {
       },
       options,
     },
-    QueryMethods
+    QueryMethods,
+    patchListener
   ) as EditorStore;
 };

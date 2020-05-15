@@ -60,7 +60,7 @@ export function useEditor<S>(collect?: any): useEditor<S> {
       },
       runWithoutHistory,
     };
-  }, [EditorActions, setNodeEvent]);
+  }, [EditorActions, runWithoutHistory, setNodeEvent]);
 
   return {
     connectors,

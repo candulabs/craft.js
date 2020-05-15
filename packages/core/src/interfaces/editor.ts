@@ -1,13 +1,30 @@
 import { Nodes, NodeEvents, NodeId } from "./nodes";
 import { Placement } from "./events";
 import { useInternalEditor } from "../editor/useInternalEditor";
+import {
+  CallbacksFor,
+  Delete,
+  PatchListenerAction,
+  QueryCallbacksFor,
+} from "@candulabs/craft-utils";
+import { ActionMethodsWithConfig } from "../editor/store";
+import { QueryMethods } from "../editor/query";
 
 export type Options = {
   onRender: React.ComponentType<{ render: React.ReactElement }>;
-  onStateChange: (Nodes) => any;
+  onStateChange: (nodes: Nodes) => void;
   resolver: Resolver;
   enabled: boolean;
   indicator: Record<"success" | "error", string>;
+  normaliseNodes: (
+    state: EditorState,
+    previousState: EditorState,
+    actionPerformed: Delete<
+      PatchListenerAction<EditorState, typeof ActionMethodsWithConfig>,
+      "patches"
+    >,
+    query: QueryCallbacksFor<typeof QueryMethods>
+  ) => void;
 };
 
 export type Resolver = Record<string, string | React.ElementType>;

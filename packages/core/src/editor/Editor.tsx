@@ -24,9 +24,24 @@ export const withDefaults = (options: Partial<Options> = {}) => ({
  */
 export const Editor: React.FC<Partial<Options>> = ({
   children,
+  normaliseNodes,
   ...options
 }) => {
-  const context = useEditorStore(withDefaults(options));
+  const context = useEditorStore(
+    withDefaults(options),
+    (draft, previousState, actionPerformedWithPatches, query) => {
+      const { patches, ...actionPerformed } = actionPerformedWithPatches;
+      for (let i = 0; i < patches.length; i++) {
+        const { path } = patches[i];
+        if (path.length > 2 && path[0] == "nodes" && path[2] == "data") {
+          if (normaliseNodes) {
+            normaliseNodes(draft, previousState, actionPerformed, query);
+          }
+          break; // we exit the loop as soon as we find a change in node.data
+        }
+      }
+    }
+  );
 
   useEffect(() => {
     if (context && options)
