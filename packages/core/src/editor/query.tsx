@@ -283,7 +283,8 @@ export function QueryMethods(state: EditorState) {
               const targetDeepNodes = nodeQuery(targetNode.id).decendants();
               invariant(targetNode.data.parent, ERROR_MOVE_NONCANVAS_CHILD);
               invariant(
-                !targetDeepNodes.includes(newParentNode.id),
+                !targetDeepNodes.includes(newParentNode.id) &&
+                  newParentNode.id !== targetNode.id,
                 ERROR_MOVE_TO_DESCENDANT
               );
               invariant(
