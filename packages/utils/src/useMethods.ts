@@ -104,10 +104,11 @@ export type PatchListener<
   M extends MethodsOrOptions,
   Q extends QueryMethods
 > = (
-  draft: S,
+  newState: S,
   previousState: S,
   actionPerformedWithPatches: PatchListenerAction<S, M>,
-  query: QueryCallbacksFor<Q>
+  query: QueryCallbacksFor<Q>,
+  normaliser: (cb: (draft: S) => void) => void
 ) => void;
 
 export function useMethods<S, R extends MethodRecordBase<S>>(
@@ -161,52 +162,56 @@ export function useMethods<
           queryMethods && createQuery(queryMethods, () => state, history);
 
         let finalState;
-        const [
-          nextState,
-          patches,
-          inversePatches,
-        ] = (produceWithPatches as any)(state, (draft: S) => {
-          switch (action.type) {
-            case "undo": {
-              if (history.canUndo()) {
-                if (normalizeHistory) {
-                  normalizeHistory(draft);
+        let [nextState, patches, inversePatches] = (produceWithPatches as any)(
+          state,
+          (draft: S) => {
+            switch (action.type) {
+              case "undo": {
+                if (history.canUndo()) {
+                  if (normalizeHistory) {
+                    normalizeHistory(draft);
+                  }
+                  return history.undo(draft);
                 }
-                return history.undo(draft);
+                break;
               }
-              break;
-            }
-            case "redo": {
-              if (history.canRedo()) {
-                if (normalizeHistory) {
-                  normalizeHistory(draft);
+              case "redo": {
+                if (history.canRedo()) {
+                  if (normalizeHistory) {
+                    normalizeHistory(draft);
+                  }
+                  return history.redo(draft);
                 }
-                return history.redo(draft);
+                break;
               }
-              break;
-            }
 
-            case "runWithoutHistory": {
-              const [type, ...params] = action.payload;
-              methods(draft, query)[type](...params);
-              break;
+              case "runWithoutHistory": {
+                const [type, ...params] = action.payload;
+                methods(draft, query)[type](...params);
+                break;
+              }
+              default:
+                methods(draft, query)[action.type](...action.payload);
             }
-            default:
-              methods(draft, query)[action.type](...action.payload);
           }
-        });
+        );
 
         finalState = nextState;
 
         if (patchListener) {
-          finalState = produce(nextState, (draft) => {
-            patchListener(
-              draft,
-              state,
-              { type: action.type, payload: action.payload, patches },
-              query
-            );
-          });
+          patchListener(
+            nextState,
+            state,
+            { type: action.type, payload: action.payload, patches },
+            query,
+            (cb) => {
+              let normalisedDraft = produceWithPatches(nextState, cb);
+              finalState = normalisedDraft[0];
+
+              patches = [...patches, ...normalisedDraft[1]];
+              inversePatches = [, ...normalisedDraft[2], ...inversePatches];
+            }
+          );
         }
 
         if (
