@@ -3,8 +3,6 @@ import { NodeId, Node, Indicator, Tree } from "../interfaces";
 import { Handlers, ConnectorsForHandlers } from "@candulabs/craft-utils";
 import { debounce } from "debounce";
 import { EditorStore } from "../editor/store";
-import { Simulate } from "react-dom/test-utils";
-import drag = Simulate.drag;
 
 type DraggedElement = NodeId | Tree;
 
@@ -17,7 +15,7 @@ const event = ({
   handler: (e: MouseEvent, payload: any) => void;
   capture?: boolean;
 }) => (capture ? [name, handler, capture] : [name, handler]);
-const rapidDebounce = (f) => debounce(f, 100);
+const rapidDebounce = (f) => debounce(f, 10);
 
 /**
  * Specifies Editor-wide event handlers and connectors
