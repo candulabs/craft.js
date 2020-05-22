@@ -181,11 +181,10 @@ describe("actions.setState", () => {
     const nodes = {
       "canvas-ROOT": {
         data: {
-          _childCanvas: undefined,
           custom: {},
           displayName: "Document",
-          hidden: undefined,
-          isCanvas: undefined,
+          hidden: false,
+          isCanvas: false,
           name: "Document",
           nodes: [],
           parent: undefined,
