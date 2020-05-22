@@ -17,7 +17,7 @@ const event = ({
   handler: (e: MouseEvent, payload: any) => void;
   capture?: boolean;
 }) => (capture ? [name, handler, capture] : [name, handler]);
-const rapidDebounce = (f) => debounce(f, 1);
+const rapidDebounce = (f) => debounce(f, 100);
 
 /**
  * Specifies Editor-wide event handlers and connectors
@@ -48,10 +48,10 @@ export class EventHandlers extends Handlers<
         events: [
           event({
             name: "mouseover",
-            handler: (e, id: NodeId) => {
-              e.stopPropagation();
+            handler: rapidDebounce((e, id: NodeId) => {
               this.store.actions.setNodeEvent("hovered", id);
-            },
+            }),
+            capture: true,
           }),
         ],
       },
