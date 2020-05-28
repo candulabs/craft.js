@@ -20,6 +20,7 @@ describe("EventHandlers", () => {
   let store;
   let actions;
   let query;
+  let subscribe;
 
   beforeEach(() => {
     e = {
@@ -44,7 +45,7 @@ describe("EventHandlers", () => {
       parseTreeFromReactNode: jest.fn(),
       getDropPlaceholder: jest.fn(),
     };
-    store = { actions, query };
+    store = { actions, query, subscribe };
     eventHandlers = new EventHandlers(store);
   });
 
@@ -86,7 +87,7 @@ describe("EventHandlers", () => {
       expect(getHandler(hover.events, "mouseover")).toBeDefined();
     });
     it("should call setNodeEvent on mouseover", () => {
-      callHandler(hover.events, "mouseover")(null, nodeId);
+      callHandler(hover.events, "mouseover")(e, nodeId);
       expect(actions.setNodeEvent).toHaveBeenCalledWith("hovered", nodeId);
     });
   });
@@ -163,10 +164,19 @@ describe("EventHandlers", () => {
     const shadow = "a shadow";
     let drag;
     let el;
+    let disabledDragging = false;
 
     beforeEach(() => {
       drag = eventHandlers.handlers().drag;
       el = { setAttribute: jest.fn() };
+      subscribe = jest.fn().mockImplementation((watch, collect) => {
+        collect({
+          enabled: true,
+          disabledDragging,
+        });
+
+        return () => {};
+      });
     });
     it("should contain two events, dragover and dragenter", () => {
       expect(drag.events).toHaveLength(2);
@@ -183,6 +193,11 @@ describe("EventHandlers", () => {
       });
       it("should call setAttribute with the right arguments", () => {
         expect(el.setAttribute).toHaveBeenNthCalledWith(1, "draggable", true);
+        expect(el.setAttribute).toHaveBeenNthCalledWith(2, "draggable", false);
+      });
+      it("should set draggable=false when disabledDragging=true", () => {
+        disabledDragging = true;
+        drag.init(el)();
         expect(el.setAttribute).toHaveBeenNthCalledWith(2, "draggable", false);
       });
     });

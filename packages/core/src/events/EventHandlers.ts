@@ -110,7 +110,7 @@ export class EventHandlers extends Handlers<
           );
           return () => {
             unsubscribe();
-            el.setAttribute("draggable", "false");
+            el.setAttribute("draggable", false);
           };
         },
         events: [
