@@ -1,7 +1,6 @@
 import { createShadow } from "./createShadow";
 import { NodeId, Node, Indicator, Tree } from "../interfaces";
 import { Handlers, ConnectorsForHandlers } from "@candulabs/craft-utils";
-import { debounce } from "debounce";
 import { EditorStore } from "../editor/store";
 
 type DraggedElement = NodeId | Tree;
@@ -15,7 +14,6 @@ const event = ({
   handler: (e: MouseEvent, payload: any) => void;
   capture?: boolean;
 }) => (capture ? [name, handler, capture] : [name, handler]);
-const rapidDebounce = (f) => debounce(f, 10);
 
 /**
  * Specifies Editor-wide event handlers and connectors
@@ -46,10 +44,10 @@ export class EventHandlers extends Handlers<
         events: [
           event({
             name: "mouseover",
-            handler: rapidDebounce((e, id: NodeId) => {
+            handler: (e, id: NodeId) => {
+              e.stopPropagation();
               this.store.actions.setNodeEvent("hovered", id);
-            }),
-            capture: true,
+            },
           }),
         ],
       },
