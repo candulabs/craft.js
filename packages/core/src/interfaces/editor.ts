@@ -15,6 +15,9 @@ export type Options = {
   onStateChange: (nodes: Nodes) => void;
   resolver: Resolver;
   enabled: boolean;
+  disabledEvents: {
+    dragging: boolean;
+  };
   indicator: Record<"success" | "error", string>;
   normaliseNodes: (
     state: EditorState,

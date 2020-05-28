@@ -12,6 +12,9 @@ export const withDefaults = (options: Partial<Options> = {}) => ({
   resolver: {},
   nodes: null,
   enabled: true,
+  disabledEvents: {
+    dragging: false,
+  },
   indicator: {
     error: "red",
     success: "rgb(98, 196, 98)",

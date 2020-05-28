@@ -98,8 +98,20 @@ export class EventHandlers extends Handlers<
 
       drag: {
         init: (el) => {
-          el.setAttribute("draggable", true);
-          return () => el.setAttribute("draggable", false);
+          const unsubscribe = this.store.subscribe(
+            (state) => ({
+              enabled: state.options.enabled,
+              disabledDragging: state.options.disabledEvents.dragging,
+            }),
+            ({ enabled, disabledDragging }) => {
+              el.setAttribute("draggable", enabled && !disabledDragging);
+            },
+            true
+          );
+          return () => {
+            unsubscribe();
+            el.setAttribute("draggable", "false");
+          };
         },
         events: [
           event({
