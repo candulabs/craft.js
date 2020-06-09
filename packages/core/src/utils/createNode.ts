@@ -49,6 +49,12 @@ export function createNode(
       ...node.data.props,
     };
 
+    // TODO!!: To be handled via <Element custom={...} />
+    if (node.data.props["custom"]) {
+      node.data.custom = node.data.props["custom"];
+      delete node.data.props["custom"];
+    }
+
     if (actualType.craft) {
       if (actualType.craft.name) {
         node.data.displayName = actualType.craft.name;
