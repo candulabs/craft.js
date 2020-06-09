@@ -36,7 +36,7 @@ export const Frame: React.FC<Frame> = ({ children, json, data }) => {
     const { initialChildren, initialData } = initialState.current;
 
     if (initialData) {
-      runWithoutHistory.setState(initialData);
+      runWithoutHistory.deserializeFromSerializedNodes(initialData);
     } else if (initialChildren) {
       const rootCanvas = React.Children.only(
         initialChildren

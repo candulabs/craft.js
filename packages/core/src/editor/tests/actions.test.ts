@@ -167,7 +167,7 @@ describe("actions.reset", () => {
   });
 });
 
-describe("actions.setState", () => {
+describe("actions.deserializeFromSerializedNodes", () => {
   const serialized = mapValues(documentState.nodes, ({ data }) => ({
     type: {},
     ...data,
@@ -175,7 +175,7 @@ describe("actions.setState", () => {
 
   it("should be able to set the state correctly", () => {
     const newState = Actions(emptyState)((actions) =>
-      actions.setState(serialized)
+      actions.deserializeFromSerializedNodes(serialized)
     );
 
     const nodes = {

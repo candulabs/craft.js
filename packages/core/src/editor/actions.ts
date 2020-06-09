@@ -149,7 +149,7 @@ export const Actions = (
 
     deserialize(json: string) {
       const reducedNodes: Record<NodeId, SerializedNodeData> = JSON.parse(json);
-      this.setState(reducedNodes);
+      this.deserializeFromSerializedNodes(reducedNodes);
     },
 
     /**
@@ -276,7 +276,10 @@ export const Actions = (
       cb(state.nodes[id].data.props);
     },
 
-    setState(dehydratedNodes: Record<NodeId, SerializedNodeData>) {
+    // TODO!: Temporary name change, to be replaced by the updated deserialize method in the main repo
+    deserializeFromSerializedNodes(
+      dehydratedNodes: Record<NodeId, SerializedNodeData>
+    ) {
       const nodePairs = Object.keys(dehydratedNodes).map((id) => [
         id,
         query.parseNodeFromSerializedNode(dehydratedNodes[id], id),
@@ -284,6 +287,10 @@ export const Actions = (
 
       this.replaceNodes(fromEntries(nodePairs));
       this.replaceEvents(editorEmptyState.events);
+    },
+
+    setState(cb) {
+      cb(state);
     },
   };
 };
