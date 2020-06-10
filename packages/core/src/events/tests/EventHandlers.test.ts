@@ -86,7 +86,7 @@ describe("EventHandlers", () => {
       expect(getHandler(hover.events, "mouseover")).toBeDefined();
     });
     it("should call setNodeEvent on mouseover", () => {
-      callHandler(hover.events, "mouseover")(null, nodeId);
+      callHandler(hover.events, "mouseover")(e, nodeId);
       expect(actions.setNodeEvent).toHaveBeenCalledWith("hovered", nodeId);
     });
   });
