@@ -279,6 +279,11 @@ export function QueryMethods(state: EditorState) {
               ERROR_MOVE_INCOMING_PARENT
             );
 
+            invariant(
+              targetNode.rules.canDrop(newParentNode, targetNode, _().node),
+              "Cannot drop Node to target"
+            );
+
             if (currentParentNode) {
               const targetDeepNodes = nodeQuery(targetNode.id).decendants();
               invariant(targetNode.data.parent, ERROR_MOVE_NONCANVAS_CHILD);
@@ -287,14 +292,17 @@ export function QueryMethods(state: EditorState) {
                   newParentNode.id !== targetNode.id,
                 ERROR_MOVE_TO_DESCENDANT
               );
-              invariant(
-                currentParentNode.rules.canMoveOut(
-                  targetNode,
-                  currentParentNode,
-                  _().node
-                ),
-                ERROR_MOVE_OUTGOING_PARENT
-              );
+
+              if (node !== currentParentNode) {
+                invariant(
+                  currentParentNode.rules.canMoveOut(
+                    targetNode,
+                    currentParentNode,
+                    _().node
+                  ),
+                  ERROR_MOVE_OUTGOING_PARENT
+                );
+              }
             }
             return true;
           } catch (err) {
