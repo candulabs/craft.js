@@ -202,7 +202,7 @@ export function useMethods<
           patchListener(
             nextState,
             state,
-            { type: action.type, payload: action.payload, patches },
+            { type: action.type, params: action.payload, patches },
             query,
             (cb) => {
               let normalisedDraft = produceWithPatches(nextState, cb);
