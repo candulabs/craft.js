@@ -30,7 +30,12 @@ export const Editor: React.FC<Partial<Options>> = ({
   const context = useEditorStore(
     withDefaults(options),
     (_, previousState, actionPerformedWithPatches, query, normaliser) => {
+      if (!actionPerformedWithPatches) {
+        return;
+      }
+
       const { patches, ...actionPerformed } = actionPerformedWithPatches;
+
       for (let i = 0; i < patches.length; i++) {
         const { path } = patches[i];
         const isModifyingNodeData =
@@ -38,7 +43,7 @@ export const Editor: React.FC<Partial<Options>> = ({
 
         let actionType = actionPerformed.type;
 
-        if (actionType === "runWithoutHistory") {
+        if (actionType === "runWithoutHistory" && actionPerformed.params) {
           actionType = actionPerformed.params[0];
         }
 
