@@ -1,3 +1,3 @@
 export { useEventHandler } from "./EventContext";
-export { DerivedEventHandlers } from "./EventHandlers";
+export { DerivedEventHandlers, EventHandlers } from "./EventHandlers";
 export { Events } from "./Events";
