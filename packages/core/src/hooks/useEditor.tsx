@@ -6,7 +6,7 @@ import { useMemo } from "react";
 import { NodeId } from "../interfaces";
 import { Overwrite, Delete } from "@candulabs/craft-utils";
 
-export type useEditor<S = null> = Overwrite<
+export type useEditorReturnType<S = null> = Overwrite<
   useInternalEditor<S>,
   {
     actions: Delete<
@@ -27,10 +27,12 @@ export type useEditor<S = null> = Overwrite<
  * A Hook that that provides methods and information related to the entire editor state.
  * @param collector Collector function to consume values from the editor's state
  */
-export function useEditor(): useEditor;
-export function useEditor<S>(collect: EditorCollector<S>): useEditor<S>;
+export function useEditor(): useEditorReturnType;
+export function useEditor<S>(
+  collect: EditorCollector<S>
+): useEditorReturnType<S>;
 
-export function useEditor<S>(collect?: any): useEditor<S> {
+export function useEditor<S>(collect?: any): useEditorReturnType<S> {
   const {
     connectors,
     actions: {
@@ -66,6 +68,7 @@ export function useEditor<S>(collect?: any): useEditor<S> {
     connectors,
     actions,
     query,
+    store,
     ...(collected as any),
   };
 }
