@@ -30,10 +30,27 @@ export const Editor: React.FC<Partial<Options>> = ({
   const context = useEditorStore(
     withDefaults(options),
     (_, previousState, actionPerformedWithPatches, query, normaliser) => {
+      if (!actionPerformedWithPatches) {
+        return;
+      }
+
       const { patches, ...actionPerformed } = actionPerformedWithPatches;
+
       for (let i = 0; i < patches.length; i++) {
         const { path } = patches[i];
-        if (path.length > 2 && path[0] === "nodes" && path[2] === "data") {
+        const isModifyingNodeData =
+          path.length > 2 && path[0] === "nodes" && path[2] === "data";
+
+        let actionType = actionPerformed.type;
+
+        if (actionType === "runWithoutHistory" && actionPerformed.params) {
+          actionType = actionPerformed.params[0];
+        }
+
+        if (
+          ["setState", "deserializeFromSerializedNodes"].includes(actionType) ||
+          isModifyingNodeData
+        ) {
           if (normaliseNodes) {
             normaliser((draft) => {
               normaliseNodes(draft, previousState, actionPerformed, query);
