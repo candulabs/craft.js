@@ -33,6 +33,16 @@ export type CallbacksFor<
     } & {
       undo: () => void;
       redo: () => void;
+      throttleHistory: (
+        rate?: number
+      ) => Delete<
+        {
+          [T in ActionUnion<R>["type"]]: (
+            ...payload: ActionByType<ActionUnion<R>, T>["payload"]
+          ) => void;
+        },
+        M extends Options ? M["ignoreHistoryForActions"][number] : never
+      >;
       runWithoutHistory: Delete<
         {
           [T in ActionUnion<R>["type"]]: (
@@ -67,7 +77,7 @@ export type MethodRecordBase<S = any> = Record<
 >;
 
 export type ActionUnion<R extends MethodRecordBase> = {
-  [T in keyof R]: { type: T; payload: Parameters<R[T]> };
+  [T in keyof R]: { type: T; payload: Parameters<R[T]>; namedPayload?: any };
 }[keyof R];
 
 export type ActionByType<A, T> = A extends { type: infer T2 }
@@ -185,6 +195,8 @@ export function useMethods<
                 break;
               }
 
+              // TODO: Simplify History API
+              case "throttleHistory":
               case "runWithoutHistory": {
                 const [type, ...params] = action.payload;
                 methods(draft, query)[type](...params);
@@ -222,7 +234,11 @@ export function useMethods<
             "runWithoutHistory",
           ].includes(action.type as any)
         ) {
-          history.add(patches, inversePatches);
+          if (action.type === "throttleHistory") {
+            history.throttleAdd(patches, inversePatches);
+          } else {
+            history.add(patches, inversePatches);
+          }
         }
 
         return finalState;
@@ -259,6 +275,23 @@ export function useMethods<
           dispatch({ type, payload } as ActionUnion<R>);
         return accum;
       }, {} as any),
+      throttleHistory: (rate) => {
+        return {
+          ...standardMethodsNames
+            .filter((type) => !ignoreHistoryForActions.includes(type))
+            .reduce((accum, type) => {
+              accum[type] = (...payload) =>
+                dispatch({
+                  type: "throttleHistory",
+                  payload: [type, ...payload],
+                  namedPayload: {
+                    rate,
+                  },
+                } as ActionUnion<R>);
+              return accum;
+            }, {} as any),
+        };
+      },
       runWithoutHistory: {
         ...standardMethodsNames
           .filter((type) => !ignoreHistoryForActions.includes(type))

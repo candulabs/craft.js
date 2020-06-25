@@ -1,8 +1,10 @@
 import { Patch, applyPatches } from "immer";
+import isEqualWith from "lodash.isequalwith";
 
 type Timeline = Array<{
   patches: Patch[];
   inversePatches: Patch[];
+  timestamp: number;
 }>;
 
 export class History {
@@ -16,7 +18,39 @@ export class History {
 
     this.pointer = this.pointer + 1;
     this.timeline.length = this.pointer;
-    this.timeline[this.pointer] = { patches, inversePatches };
+    this.timeline[this.pointer] = {
+      patches,
+      inversePatches,
+      timestamp: Date.now(),
+    };
+  }
+
+  throttleAdd(
+    patches: Patch[],
+    inversePatches: Patch[],
+    throttleRate: number = 500
+  ) {
+    if (this.timeline.length) {
+      const { patches: currPatches, timestamp } = this.timeline[this.pointer];
+
+      const now = new Date();
+      const diff = now.getTime() - timestamp;
+
+      if (diff < throttleRate && currPatches.length == patches.length) {
+        const isSimilar = currPatches.every((currPatch, i) => {
+          const { op: currOp, path: currPath } = currPatch;
+          const { op, path } = patches[i];
+
+          return op == currOp && isEqualWith(path, currPath);
+        });
+
+        if (isSimilar) {
+          return;
+        }
+      }
+    }
+
+    this.add(patches, inversePatches);
   }
 
   canUndo() {
@@ -34,9 +68,7 @@ export class History {
 
     const { inversePatches } = this.timeline[this.pointer];
     this.pointer = this.pointer - 1;
-    const applied = applyPatches(state, inversePatches);
-
-    return applied;
+    return applyPatches(state, inversePatches);
   }
 
   redo(state) {
@@ -46,7 +78,6 @@ export class History {
 
     this.pointer = this.pointer + 1;
     const { patches } = this.timeline[this.pointer];
-    const applied = applyPatches(state, patches);
-    return applied;
+    return applyPatches(state, patches);
   }
 }
