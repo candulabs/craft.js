@@ -30,7 +30,11 @@ export class History {
     inversePatches: Patch[],
     throttleRate: number = 500
   ) {
-    if (this.timeline.length) {
+    if (patches.length == 0 && inversePatches.length == 0) {
+      return;
+    }
+
+    if (this.timeline.length && this.pointer >= 0) {
       const { patches: currPatches, timestamp } = this.timeline[this.pointer];
 
       const now = new Date();
