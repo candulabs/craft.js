@@ -23,7 +23,7 @@ export class EventHandlers extends Handlers<
 > {
   static draggedElementShadow: HTMLElement;
   static draggedElement: DraggedElement;
-  static events: { indicator: Indicator };
+  static events: { indicator: Indicator } = {};
 
   handlers() {
     return {
@@ -110,7 +110,9 @@ export class EventHandlers extends Handlers<
 
               this.store.actions.setNodeEvent("dragged", id);
 
-              EventHandlers.draggedElementShadow = createShadow(e);
+              const dom = this.store.query.node(id).get().dom;
+
+              EventHandlers.draggedElementShadow = createShadow(e, dom);
               EventHandlers.draggedElement = id;
             },
           }),
