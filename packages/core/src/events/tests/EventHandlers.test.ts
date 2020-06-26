@@ -32,7 +32,7 @@ describe("EventHandlers", () => {
 
     EventHandlers.draggedElement = undefined;
     EventHandlers.draggedElementShadow = undefined;
-    EventHandlers.events = undefined;
+    EventHandlers.events = {};
 
     actions = {
       addTreeAtIndex: jest.fn(),
@@ -43,6 +43,11 @@ describe("EventHandlers", () => {
     query = {
       parseTreeFromReactNode: jest.fn(),
       getDropPlaceholder: jest.fn(),
+      node: () => ({
+        get: () => ({
+          dom: null,
+        }),
+      }),
     };
     store = { actions, query };
     eventHandlers = new EventHandlers(store);
@@ -229,7 +234,7 @@ describe("EventHandlers", () => {
 
       describe("if there are all the events", () => {
         beforeEach(() => {
-          EventHandlers.events = events;
+          EventHandlers.events = { ...events };
           EventHandlers.draggedElement = nodeId;
           callHandler(drag.events, "dragend")(e, nodeId);
         });
@@ -325,7 +330,7 @@ describe("EventHandlers", () => {
 
       describe("if there are all the events", () => {
         beforeEach(() => {
-          EventHandlers.events = events;
+          EventHandlers.events = { ...events };
           EventHandlers.draggedElement = nodeId;
           callHandler(create.events, "dragend")(e, nodeId);
         });
