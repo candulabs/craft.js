@@ -43,7 +43,10 @@ export const Editor: React.FC<Partial<Options>> = ({
 
         let actionType = actionPerformed.type;
 
-        if (actionType === "runWithoutHistory" && actionPerformed.params) {
+        if (
+          ["runWithoutHistory", "throttleHistory"].includes(actionType) &&
+          actionPerformed.params
+        ) {
           actionType = actionPerformed.params[0];
         }
 

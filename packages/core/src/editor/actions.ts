@@ -192,12 +192,17 @@ export const Actions = (
       state.nodes = nodes;
     },
 
+    clearEvents() {
+      this.setNodeEvent("selected", null);
+      this.setNodeEvent("hovered", null);
+      this.setNodeEvent("dragged", null);
+    },
     /**
      * Resets all the editor state.
      */
     reset() {
       this.replaceNodes({});
-      this.replaceEvents(editorEmptyState.events);
+      this.clearEvents();
     },
 
     /**
