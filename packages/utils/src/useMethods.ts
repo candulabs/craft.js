@@ -177,21 +177,11 @@ export function useMethods<
           (draft: S) => {
             switch (action.type) {
               case "undo": {
-                if (history.canUndo()) {
-                  if (normalizeHistory) {
-                    normalizeHistory(draft);
-                  }
-                  return history.undo(draft);
-                }
+                history.undo(draft);
                 break;
               }
               case "redo": {
-                if (history.canRedo()) {
-                  if (normalizeHistory) {
-                    normalizeHistory(draft);
-                  }
-                  return history.redo(draft);
-                }
+                history.redo(draft);
                 break;
               }
 
@@ -226,6 +216,9 @@ export function useMethods<
           );
         }
 
+        if (["undo", "redo"].includes(action.type as any) && normalizeHistory) {
+          finalState = produce(finalState, normalizeHistory);
+        }
         if (
           ![
             ...ignoreHistoryForActions,

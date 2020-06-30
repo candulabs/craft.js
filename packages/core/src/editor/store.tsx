@@ -17,15 +17,16 @@ export const ActionMethodsWithConfig = {
   ] as const,
   normalizeHistory: (state) => {
     /**
-     * On every undo/redo, we want to reset these values
-     * because their changes are not tracked by the history manager
+     * On every undo/redo, we remove events pointing to deleted Nodes
      */
-    state.events = {
-      selected: null,
-      dragged: null,
-      hovered: null,
-      indicator: null,
-    };
+
+    Object.keys(state.events).forEach((eventName) => {
+      const nodeId = state.events[eventName];
+
+      if (!!nodeId && !state.nodes[nodeId]) {
+        state.events[eventName] = false;
+      }
+    });
   },
 };
 
