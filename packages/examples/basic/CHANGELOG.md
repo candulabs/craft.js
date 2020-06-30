@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.4.4 (2020-06-30)
+
+
+### Bug Fixes
+
+* undo/redo state indicators ([#27](https://github.com/candulabs/craft.js/issues/27)) ([6fa955e](https://github.com/candulabs/craft.js/commit/6fa955e4c80732d01b87e9fcde08a332333a9a48))
+
+
+
+
+
 ## 0.4.3 (2020-06-29)
 
 **Note:** Version bump only for package example-basic
