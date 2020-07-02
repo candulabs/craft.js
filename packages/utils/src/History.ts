@@ -25,11 +25,6 @@ export class History {
       return;
     }
 
-    if (this.throttledInversePatch) {
-      inversePatches = this.throttledInversePatch;
-      this.throttledInversePatch = null;
-    }
-
     this.pointer = this.pointer + 1;
     this.timeline.length = this.pointer;
     this.timeline[this.pointer] = {
@@ -71,7 +66,8 @@ export class History {
       }
     }
 
-    this.add(patches, inversePatches);
+    this.add(patches, this.throttledInversePatch || inversePatches);
+    this.throttledInversePatch = null;
   }
 
   canUndo() {

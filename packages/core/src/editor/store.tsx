@@ -27,6 +27,18 @@ export const ActionMethodsWithConfig = {
         state.events[eventName] = false;
       }
     });
+
+    Object.keys(state.nodes, (id) => {
+      const node = state.nodes[id];
+
+      Object.keys(node.events).forEach((eventName) => {
+        const isEventActive = node.events[eventName];
+
+        if (!!isEventActive && !state.events[eventName] !== node.id) {
+          node.events[eventName] = false;
+        }
+      });
+    });
   },
 };
 
