@@ -7,14 +7,6 @@ type Timeline = Array<{
   timestamp: number;
 }>;
 
-// const getFocus = (patches) => {
-//   return patches.map(({op, path, value}) => value['1RNQoM'] && value['1RNQoM'].data.custom.runtime && value['1RNQoM'].data.custom.runtime.focus.anchor )
-// }
-//
-// const getText = (patches) => {
-//   return patches.map(({op, path, value}) => value['40Q4Y1'] && value['40Q4Y1'].data.props.childrenString )
-// }
-
 export class History {
   timeline: Timeline = [];
   pointer = -1;
@@ -23,11 +15,6 @@ export class History {
   add(patches: Patch[], inversePatches: Patch[]) {
     if (patches.length == 0 && inversePatches.length == 0) {
       return;
-    }
-
-    if (this.throttledInversePatch) {
-      inversePatches = this.throttledInversePatch;
-      this.throttledInversePatch = null;
     }
 
     this.pointer = this.pointer + 1;
@@ -42,7 +29,7 @@ export class History {
   throttleAdd(
     patches: Patch[],
     inversePatches: Patch[],
-    throttleRate: number = 1000
+    throttleRate: number = 500
   ) {
     if (patches.length == 0 && inversePatches.length == 0) {
       return;
@@ -71,7 +58,8 @@ export class History {
       }
     }
 
-    this.add(patches, inversePatches);
+    this.add(patches, this.throttledInversePatch || inversePatches);
+    this.throttledInversePatch = null;
   }
 
   canUndo() {
@@ -91,7 +79,6 @@ export class History {
 
     const { inversePatches } = this.timeline[this.pointer];
     this.pointer = this.pointer - 1;
-
     return applyPatches(state, inversePatches);
   }
 
