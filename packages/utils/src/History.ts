@@ -11,6 +11,7 @@ export class History {
   timeline: Timeline = [];
   pointer = -1;
 
+  throttledInversePatch: Patch[];
   add(patches: Patch[], inversePatches: Patch[]) {
     if (patches.length == 0 && inversePatches.length == 0) {
       return;
@@ -49,12 +50,16 @@ export class History {
         });
 
         if (isSimilar) {
+          if (!this.throttledInversePatch) {
+            this.throttledInversePatch = inversePatches;
+          }
           return;
         }
       }
     }
 
-    this.add(patches, inversePatches);
+    this.add(patches, this.throttledInversePatch || inversePatches);
+    this.throttledInversePatch = null;
   }
 
   canUndo() {
@@ -69,6 +74,8 @@ export class History {
     if (!this.canUndo()) {
       return;
     }
+
+    this.throttledInversePatch = null;
 
     const { inversePatches } = this.timeline[this.pointer];
     this.pointer = this.pointer - 1;
