@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Box,
   FormControlLabel,
@@ -11,21 +11,15 @@ import {
   DialogActions,
   TextField,
   Snackbar,
-} from "@material-ui/core";
-import { useEditor } from "@candulabs/craft-core";
-import lz from "lzutf8";
-import copy from "copy-to-clipboard";
+} from '@material-ui/core';
+import { useEditor } from '@candulabs/craft-core';
+import lz from 'lzutf8';
+import copy from 'copy-to-clipboard';
 
 export const Topbar = ({ onLoadState }) => {
-  const { actions, query, enabled, undoable, redoable } = useEditor(
-    (state, query) => {
-      return {
-        enabled: state.options.enabled,
-        undoable: query.canUndo(),
-        redoable: query.canRedo(),
-      };
-    }
-  );
+  const { actions, query, enabled } = useEditor((state) => ({
+    enabled: state.options.enabled,
+  }));
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState();
@@ -48,31 +42,6 @@ export const Topbar = ({ onLoadState }) => {
             }
             label="Enable"
           />
-          <MaterialButton
-            size="small"
-            variant="outlined"
-            color="secondary"
-            onClick={() => {
-              actions.undo();
-            }}
-            style={{ marginRight: "10px" }}
-            disabled={!undoable}
-          >
-            Undo
-          </MaterialButton>
-
-          <MaterialButton
-            size="small"
-            variant="outlined"
-            color="secondary"
-            onClick={() => {
-              actions.redo();
-            }}
-            style={{ marginRight: "10px" }}
-            disabled={!redoable}
-          >
-            Redo
-          </MaterialButton>
         </Grid>
         <Grid item>
           <MaterialButton
@@ -83,9 +52,9 @@ export const Topbar = ({ onLoadState }) => {
             onClick={() => {
               const json = query.serialize();
               copy(lz.encodeBase64(lz.compress(json)));
-              setSnackbarMessage("State copied to clipboard");
+              setSnackbarMessage('State copied to clipboard');
             }}
-            style={{ marginRight: "10px" }}
+            style={{ marginRight: '10px' }}
           >
             Copy current state
           </MaterialButton>
@@ -111,7 +80,7 @@ export const Topbar = ({ onLoadState }) => {
                 fullWidth
                 placeholder='Paste the contents that was copied from the "Copy Current State" button'
                 size="small"
-                value={stateToLoad || ""}
+                value={stateToLoad || ''}
                 onChange={(e) => setStateToLoad(e.target.value)}
               />
             </DialogContent>
@@ -127,7 +96,7 @@ export const Topbar = ({ onLoadState }) => {
                   setDialogOpen(false);
                   const json = lz.decompress(lz.decodeBase64(stateToLoad));
                   actions.deserialize(json);
-                  setSnackbarMessage("State loaded");
+                  setSnackbarMessage('State loaded');
                 }}
                 color="primary"
                 autoFocus
@@ -138,7 +107,10 @@ export const Topbar = ({ onLoadState }) => {
           </Dialog>
           <Snackbar
             autoHideDuration={1000}
-            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'center',
+            }}
             open={!!snackbarMessage}
             onClose={() => setSnackbarMessage(null)}
             message={<span>{snackbarMessage}</span>}

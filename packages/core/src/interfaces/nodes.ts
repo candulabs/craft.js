@@ -1,11 +1,15 @@
-import React from "react";
-import { QueryMethods } from "../editor/query";
-import { QueryCallbacksFor } from "@candulabs/craft-utils";
+import React from 'react';
+import { QueryMethods } from '../editor/query';
+import { QueryCallbacksFor } from '@candulabs/craft-utils';
 
 type UserComponentConfig<T> = {
-  name: string;
+  displayName: string;
   rules: Partial<NodeRules>;
   related: Partial<NodeRelated>;
+  props: Partial<T>;
+
+  // TODO: Deprecate
+  name: string;
   defaultProps: Partial<T>;
 };
 
@@ -22,14 +26,15 @@ export type Node = {
   dom: HTMLElement;
   related: Record<string, React.ElementType>;
   rules: NodeRules;
+  _hydrationTimestamp: number;
 };
 
-export type NodeHelpers = QueryCallbacksFor<typeof QueryMethods>["node"];
-export type NodeEvents = "selected" | "dragged" | "hovered";
+export type NodeHelpers = QueryCallbacksFor<typeof QueryMethods>['node'];
+export type NodeEvents = 'selected' | 'dragged' | 'hovered';
 export type NodeRefEvent = Record<NodeEvents, boolean>;
 export type NodeRules = {
   canDrag(node: Node, helpers: NodeHelpers): boolean;
-  canDrop(newParent: Node, self: Node, helpers: NodeHelpers): boolean;
+  canDrop(dropTarget: Node, self: Node, helpers: NodeHelpers): boolean;
   canMoveIn(canMoveIn: Node, self: Node, helpers: NodeHelpers): boolean;
   canMoveOut(canMoveOut: Node, self: Node, helpers: NodeHelpers): boolean;
 };
@@ -43,10 +48,11 @@ export type NodeData = {
   isCanvas?: boolean;
   parent: NodeId;
   index?: number;
-  _childCanvas?: Record<string, NodeId>;
+  linkedNodes?: Record<string, NodeId>;
   nodes?: NodeId[];
   hidden: boolean;
   custom?: any;
+  _childCanvas?: Record<string, NodeId>; // TODO: Deprecate in favour of linkedNodes
 };
 
 export type ReduceCompType =
@@ -61,22 +67,27 @@ export type ReducedComp = {
   props: any;
 };
 
-export type SerializedNodeData = Omit<
+export type SerializedNode = Omit<
   NodeData,
-  "type" | "subtype" | "name" | "event"
+  'type' | 'subtype' | 'name' | 'event'
 > &
   ReducedComp;
+
+export type SerializedNodes = Record<NodeId, SerializedNode>;
+
+// TODO: Deprecate in favor of SerializedNode
+export type SerializedNodeData = SerializedNode;
 
 export type Nodes = Record<NodeId, Node>;
 
 /**
- * A tree is an internal data structure for CRUD operations that involve
+ * A NodeTree is an internal data structure for CRUD operations that involve
  * more than a single node.
  *
  * For example, when we drop a component we use a tree because we
  * need to drop more than a single component.
  */
-export interface Tree {
+export interface NodeTree {
   rootNodeId: NodeId;
   nodes: Nodes;
 }

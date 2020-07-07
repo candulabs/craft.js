@@ -1,20 +1,20 @@
-import React, { useEffect } from "react";
+import React, { useEffect } from 'react';
 
-import { Options } from "../interfaces";
-import { Events } from "../events";
+import { Options } from '../interfaces';
+import { Events } from '../events';
 
-import { useEditorStore } from "./store";
-import { EditorContext } from "./EditorContext";
+import { useEditorStore } from './store';
+import { EditorContext } from './EditorContext';
 
 export const withDefaults = (options: Partial<Options> = {}) => ({
-  onStateChange: () => null,
+  onNodesChange: () => null,
   onRender: ({ render }) => render,
   resolver: {},
   nodes: null,
   enabled: true,
   indicator: {
-    error: "red",
-    success: "rgb(98, 196, 98)",
+    error: 'red',
+    success: 'rgb(98, 196, 98)',
   },
   ...options,
 });
@@ -39,19 +39,19 @@ export const Editor: React.FC<Partial<Options>> = ({
       for (let i = 0; i < patches.length; i++) {
         const { path } = patches[i];
         const isModifyingNodeData =
-          path.length > 2 && path[0] === "nodes" && path[2] === "data";
+          path.length > 2 && path[0] === 'nodes' && path[2] === 'data';
 
         let actionType = actionPerformed.type;
 
         if (
-          ["runWithoutHistory", "throttleHistory"].includes(actionType) &&
+          ['runWithoutHistory', 'throttleHistory'].includes(actionType) &&
           actionPerformed.params
         ) {
           actionType = actionPerformed.params[0];
         }
 
         if (
-          ["setState", "deserializeFromSerializedNodes"].includes(actionType) ||
+          ['setState', 'deserialize'].includes(actionType) ||
           isModifyingNodeData
         ) {
           if (normaliseNodes) {
@@ -77,8 +77,8 @@ export const Editor: React.FC<Partial<Options>> = ({
       (_) => ({
         json: context.query.serialize(),
       }),
-      ({ json }) => {
-        context.query.getOptions().onStateChange(JSON.parse(json));
+      () => {
+        context.query.getOptions().onNodesChange(context.query);
       }
     );
   }, [context]);

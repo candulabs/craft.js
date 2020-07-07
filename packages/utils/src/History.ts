@@ -1,5 +1,5 @@
-import { Patch, applyPatches } from "immer";
-import isEqualWith from "lodash.isequalwith";
+import { Patch, applyPatches } from 'immer';
+import isEqualWith from 'lodash.isequalwith';
 
 type Timeline = Array<{
   patches: Patch[];
@@ -13,7 +13,7 @@ export class History {
 
   throttledInversePatch: Patch[];
   add(patches: Patch[], inversePatches: Patch[]) {
-    if (patches.length == 0 && inversePatches.length == 0) {
+    if (patches.length === 0 && inversePatches.length === 0) {
       return;
     }
 
@@ -31,7 +31,7 @@ export class History {
     inversePatches: Patch[],
     throttleRate: number = 500
   ) {
-    if (patches.length == 0 && inversePatches.length == 0) {
+    if (patches.length === 0 && inversePatches.length === 0) {
       return;
     }
 
@@ -41,12 +41,12 @@ export class History {
       const now = new Date();
       const diff = now.getTime() - timestamp;
 
-      if (diff < throttleRate && currPatches.length == patches.length) {
+      if (diff < throttleRate && currPatches.length === patches.length) {
         const isSimilar = currPatches.every((currPatch, i) => {
           const { op: currOp, path: currPath } = currPatch;
           const { op, path } = patches[i];
 
-          return op == currOp && isEqualWith(path, currPath);
+          return op === currOp && isEqualWith(path, currPath);
         });
 
         if (isSimilar) {

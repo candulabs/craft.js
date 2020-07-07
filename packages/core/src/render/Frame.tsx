@@ -1,20 +1,12 @@
-import React, { useEffect, useState, useRef } from "react";
-import { NodeElement } from "../nodes/NodeElement";
-import { Canvas } from "../nodes/Canvas";
-import {
-  ROOT_NODE,
-  ERROR_FRAME_IMMEDIATE_NON_CANVAS,
-} from "@candulabs/craft-utils";
-import { useInternalEditor } from "../editor/useInternalEditor";
-import invariant from "tiny-invariant";
-import { Nodes } from "../interfaces";
+import React, { useEffect, useState, useRef } from 'react';
+import { NodeElement } from '../nodes/NodeElement';
+import { deprecationWarning, ROOT_NODE } from '@candulabs/craft-utils';
+import { useInternalEditor } from '../editor/useInternalEditor';
+import { SerializedNodes } from '../interfaces';
 
 export type Frame = {
-  /** The initial document defined in a json string */
-  nodes?: Nodes;
   json?: string;
-  // TODO(mat) this can be typed in nicer way
-  data?: any;
+  data?: string | SerializedNodes;
 };
 
 /**
@@ -25,29 +17,35 @@ export const Frame: React.FC<Frame> = ({ children, json, data }) => {
 
   const [render, setRender] = useState<React.ReactElement | null>(null);
 
+  if (!!json) {
+    deprecationWarning('<Frame json={...} />', {
+      suggest: '<Frame data={...} />',
+    });
+  }
+
   const initialState = useRef({
     initialChildren: children,
-    initialData: data || (json && JSON.parse(json)),
+    initialData: data || json,
   });
 
   useEffect(() => {
-    const { runWithoutHistory } = actions;
-    const { parseNodeFromReactNode } = query;
     const { initialChildren, initialData } = initialState.current;
 
     if (initialData) {
-      runWithoutHistory.deserializeFromSerializedNodes(initialData);
+      actions.runWithoutHistory.deserialize(initialData);
     } else if (initialChildren) {
-      const rootCanvas = React.Children.only(
+      const rootNode = React.Children.only(
         initialChildren
       ) as React.ReactElement;
 
-      invariant(
-        rootCanvas.type && rootCanvas.type === Canvas,
-        ERROR_FRAME_IMMEDIATE_NON_CANVAS
-      );
-      const node = parseNodeFromReactNode(rootCanvas, { id: ROOT_NODE });
-      runWithoutHistory.replaceNodes({ [ROOT_NODE]: node });
+      const node = query.parseReactElement(rootNode).toNodeTree((node, jsx) => {
+        if (jsx === rootNode) {
+          node.id = ROOT_NODE;
+        }
+        return node;
+      });
+
+      actions.runWithoutHistory.addNodeTree(node);
     }
 
     setRender(<NodeElement id={ROOT_NODE} />);

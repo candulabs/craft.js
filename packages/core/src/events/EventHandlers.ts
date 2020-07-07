@@ -1,84 +1,73 @@
-import { createShadow } from "./createShadow";
-import { NodeId, Node, Indicator, Tree } from "../interfaces";
-import { Handlers, ConnectorsForHandlers } from "@candulabs/craft-utils";
-import { EditorStore } from "../editor/store";
+import { createShadow } from './createShadow';
+import { Indicator, NodeId, NodeTree } from '../interfaces';
+import {
+  ConnectorsForHandlers,
+  defineEventListener,
+  Handlers,
+  CraftDOMEvent,
+} from '@candulabs/craft-utils';
+import { EditorStore } from '../editor/store';
 
-type DraggedElement = NodeId | Tree;
-
-const event = ({
-  name,
-  handler,
-  capture,
-}: {
-  name: string;
-  handler: (e: MouseEvent, payload: any) => void;
-  capture?: boolean;
-}) => (capture ? [name, handler, capture] : [name, handler]);
+type DraggedElement = NodeId | NodeTree;
 
 /**
  * Specifies Editor-wide event handlers and connectors
  */
 export class EventHandlers extends Handlers<
-  "select" | "hover" | "drag" | "drop" | "create"
+  'select' | 'hover' | 'drag' | 'drop' | 'create'
 > {
   static draggedElementShadow: HTMLElement;
   static draggedElement: DraggedElement;
-  static events: { indicator: Indicator } = {};
+  static events: { indicator: Indicator } = {
+    indicator: null,
+  };
 
   handlers() {
     return {
       select: {
-        init: () => () => this.store.actions.setNodeEvent("selected", null),
+        init: () => () => this.store.actions.setNodeEvent('selected', null),
         events: [
-          event({
-            name: "mousedown",
-            handler: (e, id: NodeId) => {
-              e.stopPropagation();
-              this.store.actions.setNodeEvent("selected", id);
-            },
-          }),
+          defineEventListener(
+            'mousedown',
+            (e: CraftDOMEvent<MouseEvent>, id: NodeId) => {
+              e.craft.stopPropagation();
+              this.store.actions.setNodeEvent('selected', id);
+            }
+          ),
         ],
       },
       hover: {
-        init: () => () => this.store.actions.setNodeEvent("hovered", null),
+        init: () => () => this.store.actions.setNodeEvent('hovered', null),
         events: [
-          event({
-            name: "mouseover",
-            handler: (e, id: NodeId) => {
-              e.stopPropagation();
-              this.store.actions.setNodeEvent("hovered", id);
-            },
-          }),
+          defineEventListener(
+            'mouseover',
+            (e: CraftDOMEvent<MouseEvent>, id: NodeId) => {
+              e.craft.stopPropagation();
+              this.store.actions.setNodeEvent('hovered', id);
+            }
+          ),
         ],
       },
       drop: {
         events: [
-          event({
-            name: "dragover",
-            handler: (e: MouseEvent) => {
-              e.preventDefault();
-              e.stopPropagation();
-            },
+          defineEventListener('dragover', (e: CraftDOMEvent<MouseEvent>) => {
+            e.craft.stopPropagation();
+            e.preventDefault();
           }),
-          event({
-            name: "dragenter",
-            handler: (e: MouseEvent, targetId: NodeId) => {
+          defineEventListener(
+            'dragenter',
+            (e: CraftDOMEvent<MouseEvent>, targetId: NodeId) => {
+              e.craft.stopPropagation();
               e.preventDefault();
-              e.stopPropagation();
 
-              const { draggedElement } = EventHandlers;
+              const draggedElement = EventHandlers.draggedElement as NodeTree;
               if (!draggedElement) {
                 return;
               }
 
-              let node: Node | NodeId = draggedElement as NodeId;
-
-              if (draggedElement["rootNodeId"]) {
-                node = (draggedElement as Tree).nodes[
-                  (draggedElement as Tree).rootNodeId
-                ];
-              }
-
+              const node = draggedElement.rootNodeId
+                ? draggedElement.nodes[draggedElement.rootNodeId]
+                : draggedElement;
               const { clientX: x, clientY: y } = e;
               const indicator = this.store.query.getDropPlaceholder(
                 node,
@@ -91,81 +80,73 @@ export class EventHandlers extends Handlers<
               }
               this.store.actions.setIndicator(indicator);
               EventHandlers.events = { indicator };
-            },
-          }),
+            }
+          ),
         ],
       },
 
       drag: {
-        init: (el) => {
-          el.setAttribute("draggable", true);
-          return () => el.setAttribute("draggable", false);
+        init: (el, id) => {
+          if (!this.store.query.node(id).isDraggable()) {
+            return () => {};
+          }
+
+          el.setAttribute('draggable', 'true');
+          return () => el.setAttribute('draggable', 'false');
         },
         events: [
-          event({
-            name: "dragstart",
-            handler: (e: DragEvent, id: NodeId) => {
-              e.stopPropagation();
-              e.stopImmediatePropagation();
+          defineEventListener(
+            'dragstart',
+            (e: CraftDOMEvent<DragEvent>, id: NodeId) => {
+              e.craft.stopPropagation();
+              this.store.actions.setNodeEvent('dragged', id);
 
-              this.store.actions.setNodeEvent("dragged", id);
-
-              const dom = this.store.query.node(id).get().dom;
-
-              EventHandlers.draggedElementShadow = createShadow(e, dom);
+              EventHandlers.draggedElementShadow = createShadow(e);
               EventHandlers.draggedElement = id;
-            },
-          }),
-          event({
-            name: "dragend",
-            handler: (e: DragEvent) => {
-              e.stopPropagation();
-
-              const onDropElement = (draggedElement, placement) =>
-                this.store.actions.move(
-                  draggedElement as NodeId,
-                  placement.parent.id,
-                  placement.index + (placement.where === "after" ? 1 : 0)
-                );
-              this.dropElement(onDropElement);
-            },
+            }
+          ),
+          defineEventListener('dragend', (e: CraftDOMEvent<DragEvent>) => {
+            e.craft.stopPropagation();
+            const onDropElement = (draggedElement, placement) =>
+              this.store.actions.move(
+                draggedElement as NodeId,
+                placement.parent.id,
+                placement.index + (placement.where === 'after' ? 1 : 0)
+              );
+            this.dropElement(onDropElement);
           }),
         ],
       },
       create: {
         init: (el) => {
-          el.setAttribute("draggable", true);
-          return () => el.removeAttribute("draggable");
+          el.setAttribute('draggable', 'true');
+          return () => el.removeAttribute('draggable');
         },
         events: [
-          event({
-            name: "dragstart",
-            handler: (e: DragEvent, userElement: React.ElementType) => {
-              e.stopPropagation();
-              e.stopImmediatePropagation();
-
-              const tree = this.store.query.parseTreeFromReactNode(userElement);
+          defineEventListener(
+            'dragstart',
+            (e: CraftDOMEvent<DragEvent>, userElement: React.ReactElement) => {
+              e.craft.stopPropagation();
+              const tree = this.store.query
+                .parseReactElement(userElement)
+                .toNodeTree();
 
               EventHandlers.draggedElementShadow = createShadow(e);
               EventHandlers.draggedElement = tree;
-            },
-          }),
-          event({
-            name: "dragend",
-            handler: (e: DragEvent) => {
-              e.stopPropagation();
-
-              const onDropElement = (draggedElement, placement) => {
-                const index =
-                  placement.index + (placement.where === "after" ? 1 : 0);
-                this.store.actions.addTreeAtIndex(
-                  draggedElement,
-                  placement.parent.id,
-                  index
-                );
-              };
-              this.dropElement(onDropElement);
-            },
+            }
+          ),
+          defineEventListener('dragend', (e: CraftDOMEvent<DragEvent>) => {
+            e.craft.stopPropagation();
+            const onDropElement = (draggedElement, placement) => {
+              const index =
+                placement.index + (placement.where === 'after' ? 1 : 0);
+              this.store.actions.addNodeTree(
+                draggedElement,
+                placement.parent.id,
+                index
+              );
+            };
+            this.dropElement(onDropElement);
           }),
         ],
       },
@@ -175,17 +156,11 @@ export class EventHandlers extends Handlers<
   private dropElement(
     onDropNode: (
       draggedElement: DraggedElement,
-      placement: Indicator["placement"]
+      placement: Indicator['placement']
     ) => void
   ) {
     const { draggedElement, draggedElementShadow, events } = EventHandlers;
-
-    if (
-      draggedElement &&
-      events &&
-      events.indicator &&
-      !events.indicator.error
-    ) {
+    if (draggedElement && events.indicator && !events.indicator.error) {
       const { placement } = events.indicator;
       onDropNode(draggedElement, placement);
     }
@@ -197,21 +172,23 @@ export class EventHandlers extends Handlers<
 
     EventHandlers.draggedElement = null;
     EventHandlers.events.indicator = null;
+
     this.store.actions.setIndicator(null);
-    this.store.actions.setNodeEvent("dragged", null);
+    this.store.actions.setNodeEvent('dragged', null);
   }
 
   /**
    * Create a new instance of Handlers with reference to the current EventHandlers
    * @param type A class that extends DerivedEventHandlers
-   * @param args Additional arguements to pass to the constructor
+   * @param args Additional arguments to pass to the constructor
    */
   derive<T extends DerivedEventHandlers<any>, U extends any[]>(
-    type: { new (store: EditorStore, derived: EventHandlers, ...args: U): T },
+    type: {
+      new (store: EditorStore, derived: EventHandlers, ...args: U): T;
+    },
     ...args: U
   ): T {
-    const derivedHandler = new type(this.store, this, ...args);
-    return derivedHandler;
+    return new type(this.store, this, ...args);
   }
 }
 
@@ -222,7 +199,8 @@ export abstract class DerivedEventHandlers<T extends string> extends Handlers<
   T
 > {
   derived: EventHandlers;
-  constructor(store: EditorStore, derived: EventHandlers) {
+
+  protected constructor(store: EditorStore, derived: EventHandlers) {
     super(store);
     this.derived = derived;
   }

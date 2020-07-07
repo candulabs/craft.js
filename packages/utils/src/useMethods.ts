@@ -1,15 +1,15 @@
 // https://github.com/pelotom/use-methods
-import produce, { Patch, produceWithPatches } from "immer";
-import { useMemo, useEffect, useRef, useReducer, useCallback } from "react";
-import isEqualWith from "lodash.isequalwith";
-import { History } from "./History";
-import { Delete } from "./utilityTypes";
+import produce, { Patch, produceWithPatches } from 'immer';
+import { useMemo, useEffect, useRef, useReducer, useCallback } from 'react';
+import isEqualWith from 'lodash.isequalwith';
+import { History } from './History';
+import { Delete } from './utilityTypes';
 
 export type SubscriberAndCallbacksFor<
   M extends MethodsOrOptions,
   Q extends QueryMethods = any
 > = {
-  subscribe: Watcher<StateFor<M>>["subscribe"];
+  subscribe: Watcher<StateFor<M>>['subscribe'];
   getState: () => { prev: StateFor<M>; current: StateFor<M> };
   actions: CallbacksFor<M>;
   query: QueryCallbacksFor<Q>;
@@ -27,8 +27,8 @@ export type CallbacksFor<
   M extends MethodsOrOptions
 > = M extends MethodsOrOptions<any, infer R>
   ? {
-      [T in ActionUnion<R>["type"]]: (
-        ...payload: ActionByType<ActionUnion<R>, T>["payload"]
+      [T in ActionUnion<R>['type']]: (
+        ...payload: ActionByType<ActionUnion<R>, T>['payload']
       ) => void;
     } & {
       undo: () => void;
@@ -37,19 +37,19 @@ export type CallbacksFor<
         rate?: number
       ) => Delete<
         {
-          [T in ActionUnion<R>["type"]]: (
-            ...payload: ActionByType<ActionUnion<R>, T>["payload"]
+          [T in ActionUnion<R>['type']]: (
+            ...payload: ActionByType<ActionUnion<R>, T>['payload']
           ) => void;
         },
-        M extends Options ? M["ignoreHistoryForActions"][number] : never
+        M extends Options ? M['ignoreHistoryForActions'][number] : never
       >;
       runWithoutHistory: Delete<
         {
-          [T in ActionUnion<R>["type"]]: (
-            ...payload: ActionByType<ActionUnion<R>, T>["payload"]
+          [T in ActionUnion<R>['type']]: (
+            ...payload: ActionByType<ActionUnion<R>, T>['payload']
           ) => void;
         },
-        M extends Options ? M["ignoreHistoryForActions"][number] : never
+        M extends Options ? M['ignoreHistoryForActions'][number] : never
       >;
     }
   : never;
@@ -97,8 +97,8 @@ export type QueryCallbacksFor<M extends QueryMethods> = M extends QueryMethods<
   infer R
 >
   ? {
-      [T in ActionUnion<R>["type"]]: (
-        ...payload: ActionByType<ActionUnion<R>, T>["payload"]
+      [T in ActionUnion<R>['type']]: (
+        ...payload: ActionByType<ActionUnion<R>, T>['payload']
       ) => ReturnType<R[T]>;
     } & { canUndo: () => boolean; canRedo: () => boolean }
   : never;
@@ -157,7 +157,7 @@ export function useMethods<
   let ignoreHistoryForActions = [];
   let normalizeHistory;
 
-  if (typeof methodsOrOptions === "function") {
+  if (typeof methodsOrOptions === 'function') {
     methods = methodsOrOptions;
   } else {
     methods = methodsOrOptions.methods;
@@ -176,18 +176,18 @@ export function useMethods<
           state,
           (draft: S) => {
             switch (action.type) {
-              case "undo": {
+              case 'undo': {
                 history.undo(draft);
                 break;
               }
-              case "redo": {
+              case 'redo': {
                 history.redo(draft);
                 break;
               }
 
               // TODO: Simplify History API
-              case "throttleHistory":
-              case "runWithoutHistory": {
+              case 'throttleHistory':
+              case 'runWithoutHistory': {
                 const [type, ...params] = action.payload;
                 methods(draft, query)[type](...params);
                 break;
@@ -211,23 +211,23 @@ export function useMethods<
               finalState = normalisedDraft[0];
 
               patches = [...patches, ...normalisedDraft[1]];
-              inversePatches = [, ...normalisedDraft[2], ...inversePatches];
+              inversePatches = [...normalisedDraft[2], ...inversePatches];
             }
           );
         }
 
-        if (["undo", "redo"].includes(action.type as any) && normalizeHistory) {
+        if (['undo', 'redo'].includes(action.type as any) && normalizeHistory) {
           finalState = produce(finalState, normalizeHistory);
         }
         if (
           ![
             ...ignoreHistoryForActions,
-            "undo",
-            "redo",
-            "runWithoutHistory",
+            'undo',
+            'redo',
+            'runWithoutHistory',
           ].includes(action.type as any)
         ) {
-          if (action.type === "throttleHistory") {
+          if (action.type === 'throttleHistory') {
             history.throttleAdd(patches, inversePatches);
           } else {
             history.add(patches, inversePatches);
@@ -238,7 +238,14 @@ export function useMethods<
       },
       methods,
     ];
-  }, []);
+  }, [
+    history,
+    ignoreHistoryForActions,
+    methods,
+    normalizeHistory,
+    patchListener,
+    queryMethods,
+  ]);
 
   const [state, dispatch] = useReducer(reducer, initialState);
 
@@ -251,15 +258,15 @@ export function useMethods<
       !queryMethods
         ? []
         : createQuery(queryMethods, () => currState.current, history),
-    [queryMethods]
+    [history, queryMethods]
   );
 
   const actions = useMemo(() => {
     const standardMethodsNames = Object.keys(methodsFactory(null, null));
-    const actionTypes: ActionUnion<R>["type"][] = [
+    const actionTypes: ActionUnion<R>['type'][] = [
       ...standardMethodsNames,
-      "undo",
-      "redo",
+      'undo',
+      'redo',
     ];
 
     return {
@@ -275,7 +282,7 @@ export function useMethods<
             .reduce((accum, type) => {
               accum[type] = (...payload) =>
                 dispatch({
-                  type: "throttleHistory",
+                  type: 'throttleHistory',
                   payload: [type, ...payload],
                   namedPayload: {
                     rate,
@@ -291,14 +298,14 @@ export function useMethods<
           .reduce((accum, type) => {
             accum[type] = (...payload) =>
               dispatch({
-                type: "runWithoutHistory",
+                type: 'runWithoutHistory',
                 payload: [type, ...payload],
               } as ActionUnion<R>);
             return accum;
           }, {} as any),
       },
     };
-  }, [methodsFactory]);
+  }, [ignoreHistoryForActions, methodsFactory]);
 
   const getState = useCallback(() => currState.current, []);
   const watcher = useMemo(() => new Watcher<S>(getState), [getState]);
@@ -376,9 +383,7 @@ class Watcher<S> {
   }
 
   notify() {
-    this.subscribers.forEach((subscriber) => {
-      subscriber.collect();
-    });
+    this.subscribers.forEach((subscriber) => subscriber.collect());
   }
 }
 

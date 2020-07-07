@@ -1,4 +1,4 @@
-export * from "./Canvas";
-export * from "./useNodeContext";
-export * from "./NodeHandlers";
-export { NodeProvider } from "./NodeContext";
+export * from './Canvas';
+export * from './Element';
+export * from './NodeHandlers';
+export { NodeProvider } from './NodeContext';
