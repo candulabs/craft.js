@@ -1,10 +1,10 @@
-import { DerivedEventHandlers } from "../events";
-import { ConnectorsForHandlers } from "@candulabs/craft-utils";
+import { DerivedEventHandlers } from '../events';
+import { ConnectorsForHandlers } from '@candulabs/craft-utils';
 
 /**
  * Creates Node-specific event handlers and connectors
  */
-export class NodeHandlers extends DerivedEventHandlers<"connect" | "drag"> {
+export class NodeHandlers extends DerivedEventHandlers<'connect' | 'drag'> {
   id;
 
   constructor(store, derived, nodeId) {

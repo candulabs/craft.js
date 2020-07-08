@@ -1,6 +1,23 @@
-import { wrapHookToRecognizeElement, Connector } from "./wrapConnectorHooks";
+import { wrapHookToRecognizeElement, Connector } from './wrapConnectorHooks';
 
-export type HandlersMap<T extends string> = Record<T, Handler>;
+export type CraftDOMEvent<T extends Event> = T & {
+  craft: {
+    stopPropagation: () => void;
+    blockedEvents: Record<string, boolean>;
+  };
+};
+
+export type CraftEventListener = [
+  string,
+  (e: CraftDOMEvent<Event>, opts: any) => void,
+  boolean
+];
+
+export const defineEventListener = (
+  name: string,
+  handler: (e: CraftDOMEvent<Event>, payload: any) => void,
+  capture?: boolean
+): CraftEventListener => [name, handler, capture];
 
 export type Handler = {
   /**
@@ -12,12 +29,31 @@ export type Handler = {
   /**
    * List of Event Listeners to add to the attached DOM element
    */
-  events: readonly [string, (e: HTMLElement, opts: any) => void, boolean?][];
+  events: readonly CraftEventListener[];
 };
 
 export type ConnectorsForHandlers<T extends Handlers> = ReturnType<
-  T["connectors"]
+  T['connectors']
 >;
+
+/**
+ * Check if a specified event is blocked by a child
+ * that's a descendant of the specified element
+ */
+const isEventBlockedByDescendant = (e, eventName, el) => {
+  // TODO: Update TS to use optional chaining
+  const blockingElements = (e.craft && e.craft.blockedEvents[eventName]) || [];
+
+  for (let i = 0; i < blockingElements.length; i++) {
+    const blockingElement = blockingElements[i];
+
+    if (el !== blockingElement && el.contains(blockingElement)) {
+      return true;
+    }
+  }
+
+  return false;
+};
 
 /**
  * Attaches/detaches a Handler to a DOM element
@@ -61,14 +97,33 @@ class WatchHandler {
     this.cleanDOM = init && init(this.el, this.opts);
     this.listenersToRemove =
       events &&
-      events.map(([event, listener, capture]) => {
+      events.map(([eventName, listener, capture]) => {
         const bindedListener = (e) => {
-          listener(e, this.opts);
+          // Store initial Craft event value
+          if (!e.craft) {
+            e.craft = {
+              blockedEvents: {},
+              stopPropagation: () => {},
+            };
+          }
+
+          if (!isEventBlockedByDescendant(e, eventName, this.el)) {
+            e.craft.stopPropagation = () => {
+              if (!e.craft.blockedEvents[eventName]) {
+                e.craft.blockedEvents[eventName] = [];
+              }
+
+              e.craft.blockedEvents[eventName].push(this.el);
+            };
+
+            listener(e, this.opts);
+          }
         };
 
-        this.el.addEventListener(event, bindedListener, capture);
+        this.el.addEventListener(eventName, bindedListener, capture);
+
         return () =>
-          this.el.removeEventListener(event, bindedListener, capture);
+          this.el.removeEventListener(eventName, bindedListener, capture);
       });
   }
 
@@ -100,7 +155,7 @@ export abstract class Handlers<T extends string = null> {
 
   abstract handlers(): Record<
     T,
-    Partial<Omit<Handler, "events"> & { events: any }> // (Hacky) without any, tsc throws an error
+    Partial<Omit<Handler, 'events'> & { events: any }> // (Hacky) without any, tsc throws an error
   >;
 
   // Returns ref connectors for handlers
@@ -116,19 +171,22 @@ export abstract class Handlers<T extends string = null> {
       }
 
       const connector = (el, opts) => {
-        if (!document.body.contains(el)) {
+        if (!el || !document.body.contains(el)) {
           Handlers.wm.delete(el);
+          return;
         }
 
         const domHandler = Handlers.wm.get(el);
         if (domHandler && domHandler[key]) {
-          if (domHandler[key].opts === opts) return;
-          domHandler[key].remove();
+          return;
         }
 
         Handlers.wm.set(el, {
           ...domHandler,
-          [key]: new WatchHandler(this.store, el, opts, { init, events }),
+          [key]: new WatchHandler(this.store, el, opts, {
+            init,
+            events,
+          }),
         });
       };
 
@@ -140,7 +198,7 @@ export abstract class Handlers<T extends string = null> {
   static getConnectors<T extends Handlers, U extends any[]>(
     this: { new (...args: U): T },
     ...args: U
-  ): ReturnType<T["connectors"]> {
+  ): ReturnType<T['connectors']> {
     const that = new this(...args);
     return that.connectors() as any;
   }

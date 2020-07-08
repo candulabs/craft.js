@@ -1,9 +1,9 @@
-import React, { useRef, useEffect } from "react";
-import { useEditor } from "@candulabs/craft-core";
-import { useLayerManager } from "../manager/useLayerManager";
-import { useLayer } from "./useLayer";
-import { LayerContextProvider } from "./LayerContextProvider";
-import { ROOT_NODE } from "@candulabs/craft-utils";
+import React, { useRef, useEffect } from 'react';
+import { useEditor } from '@candulabs/craft-core';
+import { useLayerManager } from '../manager/useLayerManager';
+import { useLayer } from './useLayer';
+import { LayerContextProvider } from './LayerContextProvider';
+import { ROOT_NODE } from '@candulabs/craft-utils';
 
 export const LayerNode: React.FC = () => {
   const { id, depth, children, expanded } = useLayer((layer) => ({
@@ -14,7 +14,7 @@ export const LayerNode: React.FC = () => {
     data: state.nodes[id] && state.nodes[id].data,
     shouldBeExpanded:
       state.events.selected &&
-      query.node(state.events.selected).ancestors().includes(id),
+      query.node(state.events.selected).ancestors(true).includes(id),
   }));
 
   const { actions, renderLayer, expandRootOnLoad } = useLayerManager(

@@ -1,66 +1,35 @@
-import React from "react";
-import { mount } from "enzyme";
-import invariant from "tiny-invariant";
-import { ERROR_FRAME_IMMEDIATE_NON_CANVAS } from "@candulabs/craft-utils";
+import React from 'react';
+import { mount } from 'enzyme';
+import { Frame } from '../Frame';
+import { useInternalEditor } from '../../editor/useInternalEditor';
 
-import { Frame } from "../Frame";
-import { useInternalEditor } from "../../editor/useInternalEditor";
-
-const children = <h1>a children</h1>;
-
-jest.mock("tiny-invariant");
-jest.mock("../../editor/useInternalEditor");
-jest.mock("../../nodes/NodeElement", () => ({
+jest.mock('tiny-invariant');
+jest.mock('../../editor/useInternalEditor');
+jest.mock('../../nodes/NodeElement', () => ({
   NodeElement: () => null,
 }));
 
 const mockEditor = useInternalEditor as jest.Mock<any>;
 
-describe("<Frame />", () => {
+describe('<Frame />', () => {
   const data = {};
-  const json = JSON.stringify(data);
   let actions;
   let query;
 
   beforeEach(() => {
     actions = {
-      runWithoutHistory: {
-        deserializeFromSerializedNodes: jest.fn(),
-        replaceNodes: jest.fn(),
-      },
+      runWithoutHistory: { addNodeTree: jest.fn(), deserialize: jest.fn() },
     };
-    query = { parseNodeFromReactNode: jest.fn() };
+    query = { createNode: jest.fn(), parseTreeFromReactNode: jest.fn() };
     mockEditor.mockImplementation(() => ({ actions, query }));
   });
-  describe("When rendering a Frame with no Children and no Data", () => {
-    it("should throw an error if the children is not a canvas", () => {
-      mount(<Frame>{children}</Frame>);
-      expect(invariant).toHaveBeenCalledWith(
-        false,
-        ERROR_FRAME_IMMEDIATE_NON_CANVAS
-      );
-    });
-  });
 
-  describe("When rendering using `json`", () => {
-    beforeEach(() => {
-      mount(<Frame json={json} />);
-    });
-    it("should parse json and call setState", () => {
-      expect(
-        actions.runWithoutHistory.deserializeFromSerializedNodes
-      ).toHaveBeenCalledWith(JSON.parse(json));
-    });
-  });
-
-  describe("When rendering using `data`", () => {
+  describe('When rendering using `data`', () => {
     beforeEach(() => {
       mount(<Frame data={data} />);
     });
-    it("should deserialize the nodes", () => {
-      expect(
-        actions.runWithoutHistory.deserializeFromSerializedNodes
-      ).toHaveBeenCalledWith(data);
+    it('should deserialize the nodes', () => {
+      expect(actions.runWithoutHistory.deserialize).toHaveBeenCalledWith(data);
     });
   });
 });

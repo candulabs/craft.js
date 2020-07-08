@@ -4,7 +4,7 @@ title: <Canvas />
 sidebar_label: <Canvas />
 ---
 
-import {API, Badge} from "./API";
+import {API, Badge} from "@site/src/components";
 
 <Badge type="component" />
 

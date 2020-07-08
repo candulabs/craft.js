@@ -1,4 +1,4 @@
-import { NodeId, Indicator } from "@candulabs/craft-core";
+import { NodeId, Indicator } from '@candulabs/craft-core';
 
 export type Layer = {
   id: NodeId;
@@ -10,7 +10,7 @@ export type Layer = {
 
 export type LayerRefEvents = Record<LayerEvents, boolean>;
 
-export type LayerEvents = "selected" | "hovered";
+export type LayerEvents = 'selected' | 'hovered';
 
 export type LayerOptions = {
   expandRootOnLoad: boolean;

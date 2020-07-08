@@ -2,18 +2,28 @@ import {
   useMethods,
   SubscriberAndCallbacksFor,
   PatchListener,
-} from "@candulabs/craft-utils";
-import { Actions } from "./actions";
-import { QueryMethods } from "./query";
-import { EditorState } from "../interfaces";
+} from '@candulabs/craft-utils';
+import { Actions } from './actions';
+import { QueryMethods } from './query';
+import { EditorState } from '../interfaces';
+
+export const editorInitialState = {
+  nodes: {},
+  events: {
+    dragged: null,
+    selected: null,
+    hovered: null,
+    indicator: null,
+  },
+};
 
 export const ActionMethodsWithConfig = {
   methods: Actions,
   ignoreHistoryForActions: [
-    "setDOM",
-    "setNodeEvent",
-    "setOptions",
-    "setIndicator",
+    'setDOM',
+    'setNodeEvent',
+    'setOptions',
+    'setIndicator',
   ] as const,
   normalizeHistory: (state) => {
     // TODO(prev): this should be handled by the general normalising function

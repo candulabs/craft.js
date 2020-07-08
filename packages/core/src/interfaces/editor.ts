@@ -1,27 +1,27 @@
-import { Nodes, NodeEvents, NodeId } from "./nodes";
-import { Placement } from "./events";
-import { useInternalEditor } from "../editor/useInternalEditor";
 import {
-  CallbacksFor,
+  QueryCallbacksFor,
   Delete,
   PatchListenerAction,
-  QueryCallbacksFor,
-} from "@candulabs/craft-utils";
-import { ActionMethodsWithConfig } from "../editor/store";
-import { QueryMethods } from "../editor/query";
+} from '@candulabs/craft-utils';
+
+import { Nodes, NodeEvents, NodeId } from './nodes';
+import { Placement } from './events';
+import { useInternalEditor } from '../editor/useInternalEditor';
+import { ActionMethodsWithConfig } from '../editor/store';
+import { QueryMethods } from '../editor/query';
 
 export type Options = {
   onRender: React.ComponentType<{ render: React.ReactElement }>;
-  onStateChange: (nodes: Nodes) => void;
+  onNodesChange: (query: QueryCallbacksFor<typeof QueryMethods>) => void;
   resolver: Resolver;
   enabled: boolean;
-  indicator: Record<"success" | "error", string>;
+  indicator: Record<'success' | 'error', string>;
   normaliseNodes: (
     state: EditorState,
     previousState: EditorState,
     actionPerformed: Delete<
       PatchListenerAction<EditorState, typeof ActionMethodsWithConfig>,
-      "patches"
+      'patches'
     >,
     query: QueryCallbacksFor<typeof QueryMethods>
   ) => void;
