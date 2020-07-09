@@ -23,7 +23,7 @@ export type Node = {
   id: NodeId;
   data: NodeData;
   events: NodeRefEvent;
-  dom: HTMLElement;
+  dom: HTMLElement | null;
   related: Record<string, React.ElementType>;
   rules: NodeRules;
   _hydrationTimestamp: number;
