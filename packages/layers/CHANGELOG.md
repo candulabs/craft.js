@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.4.8 (2020-07-10)
+
+
+### Bug Fixes
+
+* type ([#31](https://github.com/prevwong/craft.js/issues/31)) ([778c23e](https://github.com/prevwong/craft.js/commit/778c23e16a6c981d88d978598921dc2bbeaae994))
+
+
+
+
+
 ## 0.4.7 (2020-07-10)
 
 
