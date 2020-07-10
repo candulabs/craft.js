@@ -101,7 +101,9 @@ export class EventHandlers extends Handlers<
               e.craft.stopPropagation();
               this.store.actions.setNodeEvent('dragged', id);
 
-              EventHandlers.draggedElementShadow = createShadow(e);
+              const dom = this.store.query.node(id).get().dom;
+
+              EventHandlers.draggedElementShadow = createShadow(e, dom);
               EventHandlers.draggedElement = id;
             }
           ),
