@@ -154,18 +154,25 @@ export function useMethods<
   const history = useMemo(() => new History(), []);
 
   let methods: Methods<S, R>;
-  let ignoreHistoryForActions = [];
-  let normalizeHistory;
+  let ignoreHistoryForActionsRef = useRef([]);
+  let normalizeHistoryRef = useRef<any>();
 
   if (typeof methodsOrOptions === 'function') {
     methods = methodsOrOptions;
   } else {
     methods = methodsOrOptions.methods;
-    ignoreHistoryForActions = methodsOrOptions.ignoreHistoryForActions as any;
-    normalizeHistory = methodsOrOptions.normalizeHistory;
+    ignoreHistoryForActionsRef.current = methodsOrOptions.ignoreHistoryForActions as any;
+    normalizeHistoryRef.current = methodsOrOptions.normalizeHistory;
   }
 
+  const patchListenerRef = useRef(patchListener);
+  patchListenerRef.current = patchListener;
+
   const [reducer, methodsFactory] = useMemo(() => {
+    const { current: normalizeHistory } = normalizeHistoryRef;
+    const { current: ignoreHistoryForActions } = ignoreHistoryForActionsRef;
+    const { current: patchListener } = patchListenerRef;
+
     return [
       (state: S, action: ActionUnion<R>) => {
         const query =
@@ -177,12 +184,10 @@ export function useMethods<
           (draft: S) => {
             switch (action.type) {
               case 'undo': {
-                history.undo(draft);
-                break;
+                return history.undo(draft);
               }
               case 'redo': {
-                history.redo(draft);
-                break;
+                return history.redo(draft);
               }
 
               // TODO: Simplify History API
@@ -238,14 +243,7 @@ export function useMethods<
       },
       methods,
     ];
-  }, [
-    history,
-    ignoreHistoryForActions,
-    methods,
-    normalizeHistory,
-    patchListener,
-    queryMethods,
-  ]);
+  }, [history, methods, queryMethods]);
 
   const [state, dispatch] = useReducer(reducer, initialState);
 
@@ -268,6 +266,8 @@ export function useMethods<
       'undo',
       'redo',
     ];
+
+    const { current: ignoreHistoryForActions } = ignoreHistoryForActionsRef;
 
     return {
       ...actionTypes.reduce((accum, type) => {
@@ -305,7 +305,7 @@ export function useMethods<
           }, {} as any),
       },
     };
-  }, [ignoreHistoryForActions, methodsFactory]);
+  }, [methodsFactory]);
 
   const getState = useCallback(() => currState.current, []);
   const watcher = useMemo(() => new Watcher<S>(getState), [getState]);

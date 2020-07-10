@@ -232,7 +232,10 @@ export const Actions = (
     },
 
     clearEvents() {
-      state.events = editorInitialState.events;
+      this.setNodeEvent('selected', null);
+      this.setNodeEvent('hovered', null);
+      this.setNodeEvent('dragged', null);
+      this.setIndicator(null);
     },
 
     /**
