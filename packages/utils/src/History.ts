@@ -7,6 +7,13 @@ type Timeline = Array<{
   timestamp: number;
 }>;
 
+export const HISTORY_ACTIONS = {
+  UNDO: 'UNDO',
+  REDO: 'REDO',
+  THROTTLE: 'THROTTLE',
+  IGNORE: 'IGNORE',
+};
+
 export class History {
   timeline: Timeline = [];
   pointer = -1;
