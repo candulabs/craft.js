@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.4.7 (2020-07-10)
+
+
+### Bug Fixes
+
+* bugs ([#30](https://github.com/candulabs/craft.js/issues/30)) ([11ba9b7](https://github.com/candulabs/craft.js/commit/11ba9b747c01f4eadecedf57e7b3fb7f7e1a5ab1))
+
+
+
+
+
 ## 0.4.6 (2020-07-08)
 
 **Note:** Version bump only for package @candulabs/craft-core
