@@ -1,6 +1,7 @@
 import {
   useInternalEditor,
   EditorCollector,
+  useInternalEditorReturnType,
 } from '../editor/useInternalEditor';
 import { useMemo } from 'react';
 import { NodeId } from '../interfaces';
@@ -8,11 +9,11 @@ import { NodeId } from '../interfaces';
 type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U;
 type Delete<T, U> = Pick<T, Exclude<keyof T, U>>;
 
-export type useEditor<S = null> = Overwrite<
-  useInternalEditor<S>,
+export type useEditorReturnType<S = null> = Overwrite<
+  useInternalEditorReturnType<S>,
   {
     actions: Delete<
-      useInternalEditor<S>['actions'],
+      useInternalEditorReturnType<S>['actions'],
       | 'addLinkedNodeFromTree'
       | 'setNodeEvent'
       | 'setDOM'
@@ -21,7 +22,7 @@ export type useEditor<S = null> = Overwrite<
     > & {
       selectNode: (nodeId: NodeId | null) => void;
     };
-    query: Delete<useInternalEditor<S>['query'], 'deserialize'>;
+    query: Delete<useInternalEditorReturnType<S>['query'], 'deserialize'>;
   }
 >;
 
@@ -29,10 +30,12 @@ export type useEditor<S = null> = Overwrite<
  * A Hook that that provides methods and information related to the entire editor state.
  * @param collector Collector function to consume values from the editor's state
  */
-export function useEditor(): useEditor;
-export function useEditor<S>(collect: EditorCollector<S>): useEditor<S>;
+export function useEditor(): useEditorReturnType;
+export function useEditor<S>(
+  collect: EditorCollector<S>
+): useEditorReturnType<S>;
 
-export function useEditor<S>(collect?: any): useEditor<S> {
+export function useEditor<S>(collect?: any): useEditorReturnType<S> {
   const {
     connectors,
     actions: {

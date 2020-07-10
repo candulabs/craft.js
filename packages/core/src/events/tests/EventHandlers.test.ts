@@ -50,6 +50,9 @@ describe('EventHandlers', () => {
       parseReactElement,
       getDropPlaceholder: jest.fn(),
       node: jest.fn().mockImplementation(() => ({
+        get: () => ({
+          dom: null,
+        }),
         isDraggable: jest.fn().mockImplementation(() => isDraggable),
       })),
     };
