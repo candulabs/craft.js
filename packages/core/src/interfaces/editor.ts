@@ -6,7 +6,7 @@ import {
 
 import { Nodes, NodeEvents, NodeId } from './nodes';
 import { Placement } from './events';
-import { useInternalEditor } from '../editor/useInternalEditor';
+import { useInternalEditorReturnType } from '../editor/useInternalEditor';
 import { ActionMethodsWithConfig } from '../editor/store';
 import { QueryMethods } from '../editor/query';
 
@@ -44,4 +44,4 @@ export type EditorState = {
   options: Options;
 };
 
-export type ConnectedEditor<S = null> = useInternalEditor<S>;
+export type ConnectedEditor<S = null> = useInternalEditorReturnType<S>;
