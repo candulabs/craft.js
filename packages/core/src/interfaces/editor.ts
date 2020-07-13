@@ -4,7 +4,7 @@ import {
   PatchListenerAction,
 } from '@candulabs/craft-utils';
 
-import { Nodes, NodeEvents, NodeId } from './nodes';
+import { NodeEventTypes, NodeId, Nodes } from './nodes';
 import { Placement } from './events';
 import { useInternalEditorReturnType } from '../editor/useInternalEditor';
 import { ActionMethodsWithConfig } from '../editor/store';
@@ -34,7 +34,7 @@ export interface Indicator {
   error: string | false;
 }
 
-export type EditorEvents = Record<NodeEvents, NodeId | null> & {
+export type EditorEvents = Record<NodeEventTypes, Set<NodeId>> & {
   indicator: Indicator | null;
 };
 

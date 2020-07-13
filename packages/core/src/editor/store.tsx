@@ -5,14 +5,14 @@ import {
 } from '@candulabs/craft-utils';
 import { Actions } from './actions';
 import { QueryMethods } from './query';
-import { EditorState } from '../interfaces';
+import { EditorState, NodeId } from '../interfaces';
 
 export const editorInitialState = {
   nodes: {},
   events: {
-    dragged: null,
-    selected: null,
-    hovered: null,
+    dragged: new Set<NodeId>(),
+    selected: new Set<NodeId>(),
+    hovered: new Set<NodeId>(),
     indicator: null,
   },
 };
@@ -72,13 +72,7 @@ export const useEditorStore = (
   return useMethods(
     ActionMethodsWithConfig,
     {
-      nodes: {},
-      events: {
-        selected: null,
-        dragged: null,
-        hovered: null,
-        indicator: null,
-      },
+      ...editorInitialState,
       options,
     },
     QueryMethods,

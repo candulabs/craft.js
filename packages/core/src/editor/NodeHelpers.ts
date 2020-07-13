@@ -16,6 +16,8 @@ import {
 } from '@candulabs/craft-utils';
 import { serializeNode } from '../utils/serializeNode';
 
+type NodeSelector = NodeId | Node | NodeId[] | Node[];
+
 export function NodeHelpers(state: EditorState, id: NodeId) {
   invariant(typeof id == 'string', ERROR_INVALID_NODE_ID);
 
@@ -25,6 +27,47 @@ export function NodeHelpers(state: EditorState, id: NodeId) {
 
   const getNodeFromIdOrNode = (node: NodeId | Node) =>
     typeof node === 'string' ? state.nodes[node] : node;
+
+  // TODO: use this
+  const getNodesFromNodeSelector = (
+    target: NodeSelector
+  ): Array<{ node: Node; exists: boolean }> => {
+    let nodes = [];
+
+    if (Array.isArray(target)) {
+      const item = target[0];
+
+      if (typeof item === 'object') {
+        nodes = (target as Node[]).map((targetNode) => ({
+          exists: !!state.nodes[targetNode.id],
+          node: targetNode,
+        }));
+      } else if (typeof item === 'string') {
+        nodes = (target as string[]).map((targetId) => ({
+          node: state.nodes[targetId],
+          exists: !!state.nodes[targetId],
+        }));
+      }
+    } else {
+      if (typeof target === 'object') {
+        nodes = [
+          {
+            exists: !!state.nodes[target.id],
+            node: target,
+          },
+        ];
+      } else {
+        nodes = [
+          {
+            exists: !!state.nodes[target as string],
+            node: state.nodes[target as string],
+          },
+        ];
+      }
+    }
+
+    return nodes;
+  };
 
   return {
     isCanvas() {
@@ -51,6 +94,15 @@ export function NodeHelpers(state: EditorState, id: NodeId) {
         suggest: 'query.node(id).isParentOfTopLevelNodes',
       });
       return this.isParentOfTopLevelNodes();
+    },
+    isSelected() {
+      return state.events.selected.has(id);
+    },
+    isHovered() {
+      return state.events.hovered.has(id);
+    },
+    isDragged() {
+      return state.events.dragged.has(id);
     },
     get() {
       return node;
@@ -146,65 +198,82 @@ export function NodeHelpers(state: EditorState, id: NodeId) {
         return false;
       }
     },
-    isDroppable(target: NodeId | Node, onError?: (err: string) => void) {
-      const isNewNode = typeof target == 'object' && !state.nodes[target.id];
-      const targetNode = getNodeFromIdOrNode(target),
+    isDroppable(
+      target: NodeId[] | NodeId | Node,
+      onError?: (err: string) => void
+    ) {
+      const isNewNode = !Array.isArray(target) && !state.nodes[target.id];
+      const targetNodes = isNewNode
+          ? [target as Node]
+          : (target as NodeId[]).map((id) => state.nodes[id]),
         newParentNode = node;
       try {
-        //  If target is a NodeId (thus it's already in the state), check if it's a top-level node
-        if (typeof target === 'string') {
-          invariant(
-            !nodeHelpers(target).isTopLevelNode(),
-            ERROR_MOVE_TOP_LEVEL_NODE
-          );
-        }
-
         invariant(this.isCanvas(), ERROR_MOVE_TO_NONCANVAS_PARENT);
         invariant(
-          newParentNode.rules.canMoveIn(targetNode, newParentNode, nodeHelpers),
+          newParentNode.rules.canMoveIn(
+            targetNodes,
+            newParentNode,
+            nodeHelpers
+          ),
           ERROR_MOVE_INCOMING_PARENT
         );
 
-        invariant(
-          targetNode.rules.canDrop(newParentNode, targetNode, nodeHelpers),
-          ERROR_MOVE_CANNOT_DROP
-        );
-
+        // Return if target is a new Node
         if (isNewNode) {
           return true;
         }
 
-        const targetDeepNodes = nodeHelpers(targetNode.id).descendants(true);
+        let parentNodes = {};
 
-        invariant(
-          !targetDeepNodes.includes(newParentNode.id) &&
-            newParentNode.id !== targetNode.id,
-          ERROR_MOVE_TO_DESCENDANT
-        );
-
-        const currentParentNode =
-          targetNode.data.parent && state.nodes[targetNode.data.parent];
-
-        invariant(currentParentNode.data.isCanvas, ERROR_MOVE_NONCANVAS_CHILD);
-
-        invariant(
-          currentParentNode ||
-            (!currentParentNode && !state.nodes[targetNode.id]),
-          ERROR_DUPLICATE_NODEID
-        );
-
-        // If the Node we're checking for is not the same as the currentParentNode
-        // Check if the currentParentNode allows the targetNode to be dragged out
-        if (node !== currentParentNode) {
+        targetNodes.forEach((targetNode) => {
           invariant(
-            currentParentNode.rules.canMoveOut(
-              targetNode,
-              currentParentNode,
-              nodeHelpers
-            ),
+            !nodeHelpers(targetNode.id).isTopLevelNode(),
+            ERROR_MOVE_TOP_LEVEL_NODE
+          );
+
+          invariant(
+            targetNode.rules.canDrop(newParentNode, targetNode, nodeHelpers),
+            ERROR_MOVE_CANNOT_DROP
+          );
+
+          const targetDeepNodes = nodeHelpers(targetNode.id).descendants(true);
+
+          invariant(
+            !targetDeepNodes.includes(newParentNode.id) &&
+              newParentNode.id !== targetNode.id,
+            ERROR_MOVE_TO_DESCENDANT
+          );
+
+          const currentParentNode =
+            targetNode.data.parent && state.nodes[targetNode.data.parent];
+
+          invariant(
+            currentParentNode.data.isCanvas,
+            ERROR_MOVE_NONCANVAS_CHILD
+          );
+
+          invariant(
+            currentParentNode ||
+              (!currentParentNode && !state.nodes[targetNode.id]),
+            ERROR_DUPLICATE_NODEID
+          );
+
+          if (!parentNodes[currentParentNode.id]) {
+            parentNodes[currentParentNode.id] = [];
+          }
+
+          parentNodes[currentParentNode.id].push(targetNode);
+        });
+
+        Object.keys(parentNodes).forEach((parentNodeId) => {
+          const childNodes = parentNodes[parentNodeId];
+          const parentNode = state.nodes[parentNodeId];
+
+          invariant(
+            parentNode.rules.canMoveOut(childNodes, parentNode, nodeHelpers),
             ERROR_MOVE_OUTGOING_PARENT
           );
-        }
+        });
 
         return true;
       } catch (err) {

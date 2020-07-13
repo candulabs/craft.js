@@ -18,11 +18,18 @@ export type UserComponent<T = any> = React.ComponentType<T> & {
 };
 
 export type NodeId = string;
+export type NodeEventTypes = 'selected' | 'dragged' | 'hovered';
+
+export enum NodeEventTypes2 {
+  selected = 'selected',
+  dragged = 'dragged',
+  hovered = 'hovered',
+}
 
 export type Node = {
   id: NodeId;
   data: NodeData;
-  events: NodeRefEvent;
+  events: Record<NodeEventTypes, boolean>;
   dom: HTMLElement | null;
   related: Record<string, React.ElementType>;
   rules: NodeRules;
@@ -30,13 +37,11 @@ export type Node = {
 };
 
 export type NodeHelpers = QueryCallbacksFor<typeof QueryMethods>['node'];
-export type NodeEvents = 'selected' | 'dragged' | 'hovered';
-export type NodeRefEvent = Record<NodeEvents, boolean>;
 export type NodeRules = {
   canDrag(node: Node, helpers: NodeHelpers): boolean;
   canDrop(dropTarget: Node, self: Node, helpers: NodeHelpers): boolean;
-  canMoveIn(canMoveIn: Node, self: Node, helpers: NodeHelpers): boolean;
-  canMoveOut(canMoveOut: Node, self: Node, helpers: NodeHelpers): boolean;
+  canMoveIn(canMoveIn: Node[], self: Node, helpers: NodeHelpers): boolean;
+  canMoveOut(canMoveOut: Node[], self: Node, helpers: NodeHelpers): boolean;
 };
 export type NodeRelated = Record<string, React.ElementType>;
 

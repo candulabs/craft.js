@@ -8,6 +8,7 @@ import {
   NodeEvents,
   NodeTree,
   SerializedNodes,
+  NodeEventTypes,
 } from '../interfaces';
 import {
   deprecationWarning,
@@ -206,7 +207,7 @@ export const Actions = (
         newParent = state.nodes[newParentId],
         newParentNodes = newParent.data.nodes;
 
-      query.node(newParentId).isDroppable(targetNode, (err) => {
+      query.node(newParentId).isDroppable([targetId], (err) => {
         throw new Error(err);
       });
 
@@ -255,17 +256,30 @@ export const Actions = (
       cb(state.options);
     },
 
-    setNodeEvent(eventType: NodeEvents, id: NodeId | null) {
-      const current = state.events[eventType];
-      if (current && id !== current) {
-        state.nodes[current].events[eventType] = false;
+    setNodeEvent(eventType: NodeEventTypes, selector: NodeId | NodeId[]) {
+      if (state.events[eventType].size > 0) {
+        state.events[eventType].forEach(
+          (id) => (state.nodes[id].events[eventType] = false)
+        );
       }
 
-      if (id) {
-        state.nodes[id].events[eventType] = true;
-        state.events[eventType] = id;
+      state.events[eventType] = new Set();
+
+      if (!selector) {
+        return;
+      }
+
+      let nodeIds: Set<NodeId> = new Set();
+
+      if (typeof selector === 'string') {
+        nodeIds.add(selector);
       } else {
-        state.events[eventType] = null;
+        selector.forEach((id) => nodeIds.add(id));
+      }
+
+      if (nodeIds) {
+        nodeIds.forEach((id) => (state.nodes[id].events[eventType] = true));
+        state.events[eventType] = nodeIds;
       }
     },
 

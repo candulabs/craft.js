@@ -1,22 +1,23 @@
 import React from 'react';
 import {
-  NodeId,
   EditorState,
   Indicator,
   Node,
-  Options,
+  NodeEventTypes2,
+  NodeId,
   NodeInfo,
   NodeTree,
-  SerializedNodes,
+  Options,
   SerializedNode,
+  SerializedNodes,
 } from '../interfaces';
 import invariant from 'tiny-invariant';
 import {
-  QueryCallbacksFor,
+  DEPRECATED_ROOT_NODE,
+  deprecationWarning,
   ERROR_NOT_IN_RESOLVER,
   getDOMInfo,
-  deprecationWarning,
-  DEPRECATED_ROOT_NODE,
+  QueryCallbacksFor,
   ROOT_NODE,
 } from '@candulabs/craft-utils';
 import findPosition from '../events/findPosition';
@@ -26,6 +27,8 @@ import { mergeTrees } from '../utils/mergeTrees';
 import { resolveComponent } from '../utils/resolveComponent';
 import { deserializeNode } from '../utils/deserializeNode';
 import { NodeHelpers } from './NodeHelpers';
+
+type Constants = 'all' | 'last';
 
 export function QueryMethods(state: EditorState) {
   const options = state && state.options;
@@ -38,14 +41,13 @@ export function QueryMethods(state: EditorState) {
      * Determine the best possible location to drop the source Node relative to the target Node
      */
     getDropPlaceholder: (
-      source: NodeId | Node,
+      source: NodeId[] | Node,
       target: NodeId,
       pos: { x: number; y: number },
       nodesToDOM: (node: Node) => HTMLElement = (node) =>
         state.nodes[node.id].dom
     ) => {
-      if (source === target) return;
-      const sourceNodeFromId = typeof source == 'string' && state.nodes[source],
+      const isSourceFromState = Array.isArray(source),
         targetNode = state.nodes[target],
         isTargetCanvas = _().node(targetNode.id).isCanvas();
 
@@ -91,10 +93,12 @@ export function QueryMethods(state: EditorState) {
       };
 
       // If source Node is already in the editor, check if it's draggable
-      if (sourceNodeFromId) {
-        _()
-          .node(sourceNodeFromId.id)
-          .isDraggable((err) => (output.error = err));
+      if (isSourceFromState) {
+        (source as NodeId[]).forEach((id) => {
+          _()
+            .node(id)
+            .isDraggable((err) => (output.error = err));
+        });
       }
 
       // Check if source Node is droppable in target
@@ -129,6 +133,11 @@ export function QueryMethods(state: EditorState) {
         this.node(id).toSerializedNode(),
       ]);
       return fromEntries(nodePairs);
+    },
+
+    getEvent(type: NodeEventTypes) {
+      const arr = Array.from(state.events[type]);
+      return arr as any;
     },
 
     /**

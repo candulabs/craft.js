@@ -1,4 +1,4 @@
-import { createShadow } from './createShadow';
+import { createShadow, createShadowMultiple } from './createShadow';
 import { Indicator, NodeId, NodeTree } from '../interfaces';
 import {
   ConnectorsForHandlers,
@@ -8,7 +8,7 @@ import {
 } from '@candulabs/craft-utils';
 import { EditorStore } from '../editor/store';
 
-type DraggedElement = NodeId | NodeTree;
+type DraggedElement = NodeId[] | NodeTree;
 
 /**
  * Specifies Editor-wide event handlers and connectors
@@ -31,9 +31,38 @@ export class EventHandlers extends Handlers<
             'mousedown',
             (e: CraftDOMEvent<MouseEvent>, id: NodeId) => {
               e.craft.stopPropagation();
-              this.store.actions.setNodeEvent('selected', id);
+
+              const { query } = this.store;
+
+              let selectedElementIds = query.getEvent('selected');
+
+              // Remove any selected element that is a descendant/ancestor of the current node
+              selectedElementIds = selectedElementIds.filter((selectedId) => {
+                const descendants = query.node(selectedId).descendants(true),
+                  ancestors = query.node(selectedId).ancestors(true);
+
+                if (descendants.includes(id) || ancestors.includes(id)) {
+                  return false;
+                }
+
+                return true;
+              });
+
+              this.store.actions.setNodeEvent('selected', [
+                ...selectedElementIds,
+                id,
+              ]);
             }
           ),
+          defineEventListener('click', (e, id) => {
+            e.craft.stopPropagation();
+
+            if (e.metaKey) {
+              return;
+            }
+
+            this.store.actions.setNodeEvent('selected', [id]);
+          }),
         ],
       },
       hover: {
@@ -99,22 +128,35 @@ export class EventHandlers extends Handlers<
             'dragstart',
             (e: CraftDOMEvent<DragEvent>, id: NodeId) => {
               e.craft.stopPropagation();
-              this.store.actions.setNodeEvent('dragged', id);
 
-              const dom = this.store.query.node(id).get().dom;
+              const { query, actions } = this.store;
+              let selectedElementIds = query.getEvent('selected');
 
-              EventHandlers.draggedElementShadow = createShadow(e, dom);
-              EventHandlers.draggedElement = id;
+              actions.setNodeEvent('dragged', selectedElementIds);
+
+              const selectedDOMs = selectedElementIds.map(
+                (id) => query.node(id).get().dom
+              );
+
+              EventHandlers.draggedElementShadow = createShadowMultiple(
+                e,
+                query.node(id).get().dom,
+                selectedDOMs
+              );
+              EventHandlers.draggedElement = selectedElementIds;
             }
           ),
           defineEventListener('dragend', (e: CraftDOMEvent<DragEvent>) => {
             e.craft.stopPropagation();
-            const onDropElement = (draggedElement, placement) =>
-              this.store.actions.move(
-                draggedElement as NodeId,
-                placement.parent.id,
-                placement.index + (placement.where === 'after' ? 1 : 0)
-              );
+            const onDropElement = (draggedElement, placement) => {
+              draggedElement.forEach((dragId) => {
+                this.store.actions.move(
+                  dragId as NodeId,
+                  placement.parent.id,
+                  placement.index + (placement.where === 'after' ? 1 : 0)
+                );
+              });
+            };
             this.dropElement(onDropElement);
           }),
         ],
