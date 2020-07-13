@@ -2,7 +2,7 @@
 import produce, { Patch, produceWithPatches } from 'immer';
 import { useMemo, useEffect, useRef, useReducer, useCallback } from 'react';
 import isEqualWith from 'lodash.isequalwith';
-import { History } from './History';
+import { History, HISTORY_ACTIONS } from './History';
 import { Delete } from './utilityTypes';
 
 export type SubscriberAndCallbacksFor<
@@ -31,26 +31,28 @@ export type CallbacksFor<
         ...payload: ActionByType<ActionUnion<R>, T>['payload']
       ) => void;
     } & {
-      undo: () => void;
-      redo: () => void;
-      throttleHistory: (
-        rate?: number
-      ) => Delete<
-        {
-          [T in ActionUnion<R>['type']]: (
-            ...payload: ActionByType<ActionUnion<R>, T>['payload']
-          ) => void;
-        },
-        M extends Options ? M['ignoreHistoryForActions'][number] : never
-      >;
-      runWithoutHistory: Delete<
-        {
-          [T in ActionUnion<R>['type']]: (
-            ...payload: ActionByType<ActionUnion<R>, T>['payload']
-          ) => void;
-        },
-        M extends Options ? M['ignoreHistoryForActions'][number] : never
-      >;
+      history: {
+        undo: () => void;
+        redo: () => void;
+        throttle: (
+          rate?: number
+        ) => Delete<
+          {
+            [T in ActionUnion<R>['type']]: (
+              ...payload: ActionByType<ActionUnion<R>, T>['payload']
+            ) => void;
+          },
+          M extends Options ? M['ignoreHistoryForActions'][number] : never
+        >;
+        ignore: () => Delete<
+          {
+            [T in ActionUnion<R>['type']]: (
+              ...payload: ActionByType<ActionUnion<R>, T>['payload']
+            ) => void;
+          },
+          M extends Options ? M['ignoreHistoryForActions'][number] : never
+        >;
+      };
     }
   : never;
 
@@ -76,8 +78,14 @@ export type MethodRecordBase<S = any> = Record<
   (...args: any[]) => S extends object ? S | void : S
 >;
 
+export type Action<T = any, P = any> = {
+  type: T;
+  payload?: P;
+  config?: Record<string, any>;
+};
+
 export type ActionUnion<R extends MethodRecordBase> = {
-  [T in keyof R]: { type: T; payload: Parameters<R[T]>; namedPayload?: any };
+  [T in keyof R]: Action<T, Parameters<R[T]>>;
 }[keyof R];
 
 export type ActionByType<A, T> = A extends { type: infer T2 }
@@ -100,7 +108,12 @@ export type QueryCallbacksFor<M extends QueryMethods> = M extends QueryMethods<
       [T in ActionUnion<R>['type']]: (
         ...payload: ActionByType<ActionUnion<R>, T>['payload']
       ) => ReturnType<R[T]>;
-    } & { canUndo: () => boolean; canRedo: () => boolean }
+    } & {
+      history: {
+        canUndo: () => boolean;
+        canRedo: () => boolean;
+      };
+    }
   : never;
 
 export type PatchListenerAction<S, M extends MethodsOrOptions> = {
@@ -174,7 +187,7 @@ export function useMethods<
     const { current: patchListener } = patchListenerRef;
 
     return [
-      (state: S, action: ActionUnion<R>) => {
+      (state: S, action: Action) => {
         const query =
           queryMethods && createQuery(queryMethods, () => state, history);
 
@@ -183,16 +196,16 @@ export function useMethods<
           state,
           (draft: S) => {
             switch (action.type) {
-              case 'undo': {
+              case HISTORY_ACTIONS.UNDO: {
                 return history.undo(draft);
               }
-              case 'redo': {
+              case HISTORY_ACTIONS.REDO: {
                 return history.redo(draft);
               }
 
               // TODO: Simplify History API
-              case 'throttleHistory':
-              case 'runWithoutHistory': {
+              case HISTORY_ACTIONS.IGNORE:
+              case HISTORY_ACTIONS.THROTTLE: {
                 const [type, ...params] = action.payload;
                 methods(draft, query)[type](...params);
                 break;
@@ -221,19 +234,29 @@ export function useMethods<
           );
         }
 
-        if (['undo', 'redo'].includes(action.type as any) && normalizeHistory) {
+        if (
+          [HISTORY_ACTIONS.UNDO, HISTORY_ACTIONS.REDO].includes(
+            action.type as any
+          ) &&
+          normalizeHistory
+        ) {
           finalState = produce(finalState, normalizeHistory);
         }
+
         if (
           ![
             ...ignoreHistoryForActions,
-            'undo',
-            'redo',
-            'runWithoutHistory',
+            HISTORY_ACTIONS.UNDO,
+            HISTORY_ACTIONS.REDO,
+            HISTORY_ACTIONS.IGNORE,
           ].includes(action.type as any)
         ) {
-          if (action.type === 'throttleHistory') {
-            history.throttleAdd(patches, inversePatches);
+          if (action.type === HISTORY_ACTIONS.THROTTLE) {
+            history.throttleAdd(
+              patches,
+              inversePatches,
+              action.config && action.config.rate
+            );
           } else {
             history.add(patches, inversePatches);
           }
@@ -260,49 +283,57 @@ export function useMethods<
   );
 
   const actions = useMemo(() => {
-    const standardMethodsNames = Object.keys(methodsFactory(null, null));
-    const actionTypes: ActionUnion<R>['type'][] = [
-      ...standardMethodsNames,
-      'undo',
-      'redo',
-    ];
+    const actionTypes = Object.keys(methodsFactory(null, null));
 
     const { current: ignoreHistoryForActions } = ignoreHistoryForActionsRef;
 
     return {
       ...actionTypes.reduce((accum, type) => {
-        accum[type] = (...payload) =>
-          dispatch({ type, payload } as ActionUnion<R>);
+        accum[type] = (...payload) => dispatch({ type, payload });
         return accum;
       }, {} as any),
-      throttleHistory: (rate) => {
-        return {
-          ...standardMethodsNames
-            .filter((type) => !ignoreHistoryForActions.includes(type))
-            .reduce((accum, type) => {
-              accum[type] = (...payload) =>
-                dispatch({
-                  type: 'throttleHistory',
-                  payload: [type, ...payload],
-                  namedPayload: {
-                    rate,
-                  },
-                } as ActionUnion<R>);
-              return accum;
-            }, {} as any),
-        };
-      },
-      runWithoutHistory: {
-        ...standardMethodsNames
-          .filter((type) => !ignoreHistoryForActions.includes(type))
-          .reduce((accum, type) => {
-            accum[type] = (...payload) =>
-              dispatch({
-                type: 'runWithoutHistory',
-                payload: [type, ...payload],
-              } as ActionUnion<R>);
-            return accum;
-          }, {} as any),
+      history: {
+        undo() {
+          return dispatch({
+            type: HISTORY_ACTIONS.UNDO,
+          });
+        },
+        redo() {
+          return dispatch({
+            type: HISTORY_ACTIONS.REDO,
+          });
+        },
+        throttle: (rate) => {
+          return {
+            ...actionTypes
+              .filter((type) => !ignoreHistoryForActions.includes(type))
+              .reduce((accum, type) => {
+                accum[type] = (...payload) =>
+                  dispatch({
+                    type: HISTORY_ACTIONS.THROTTLE,
+                    payload: [type, ...payload],
+                    config: {
+                      rate: rate,
+                    },
+                  });
+                return accum;
+              }, {} as any),
+          };
+        },
+        ignore: () => {
+          return {
+            ...actionTypes
+              .filter((type) => !ignoreHistoryForActions.includes(type))
+              .reduce((accum, type) => {
+                accum[type] = (...payload) =>
+                  dispatch({
+                    type: HISTORY_ACTIONS.IGNORE,
+                    payload: [type, ...payload],
+                  });
+                return accum;
+              }, {} as any),
+          };
+        },
       },
     };
   }, [methodsFactory]);
@@ -344,8 +375,10 @@ export function createQuery<Q extends QueryMethods>(
 
   return {
     ...queries,
-    canUndo: () => history.canUndo(),
-    canRedo: () => history.canRedo(),
+    history: {
+      canUndo: () => history.canUndo(),
+      canRedo: () => history.canRedo(),
+    },
   };
 }
 

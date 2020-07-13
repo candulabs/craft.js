@@ -32,7 +32,7 @@ export const Frame: React.FC<Frame> = ({ children, json, data }) => {
     const { initialChildren, initialData } = initialState.current;
 
     if (initialData) {
-      actions.runWithoutHistory.deserialize(initialData);
+      actions.history.ignore().deserialize(initialData);
     } else if (initialChildren) {
       const rootNode = React.Children.only(
         initialChildren
@@ -45,7 +45,7 @@ export const Frame: React.FC<Frame> = ({ children, json, data }) => {
         return node;
       });
 
-      actions.runWithoutHistory.addNodeTree(node);
+      actions.history.ignore().addNodeTree(node);
     }
 
     setRender(<NodeElement id={ROOT_NODE} />);

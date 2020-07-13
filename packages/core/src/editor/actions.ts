@@ -22,7 +22,6 @@ import { QueryMethods } from './query';
 import { fromEntries } from '../utils/fromEntries';
 import { updateEventsNode } from '../utils/updateEventsNode';
 import invariant from 'tiny-invariant';
-import { editorInitialState } from './store';
 
 export const Actions = (
   state: EditorState,
