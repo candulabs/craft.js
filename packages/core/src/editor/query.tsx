@@ -28,8 +28,6 @@ import { resolveComponent } from '../utils/resolveComponent';
 import { deserializeNode } from '../utils/deserializeNode';
 import { NodeHelpers } from './NodeHelpers';
 
-type Constants = 'all' | 'last';
-
 export function QueryMethods(state: EditorState) {
   const options = state && state.options;
 
@@ -135,8 +133,8 @@ export function QueryMethods(state: EditorState) {
       return fromEntries(nodePairs);
     },
 
-    getEvent(type: NodeEventTypes) {
-      const arr = Array.from(state.events[type]);
+    getEvent(eventType: NodeEventTypes) {
+      const arr = Array.from(state.events[eventType]);
       return arr as any;
     },
 
