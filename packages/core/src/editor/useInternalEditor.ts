@@ -5,7 +5,7 @@ import { useCollector, QueryCallbacksFor } from '@candulabs/craft-utils';
 import { ActionMethodsWithConfig } from './store';
 import { useEventHandler } from '../events/EventContext';
 import { EditorContext } from './EditorContext';
-import { EventConnectors } from '../events/EventHandlers';
+import { EventConnectors } from '../events/CoreEventHandlers';
 
 export type EditorCollector<C> = (
   state: EditorState,

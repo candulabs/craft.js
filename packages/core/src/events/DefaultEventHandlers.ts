@@ -8,7 +8,7 @@ type DraggedElement = NodeId[] | NodeTree;
 /**
  * Specifies Editor-wide event handlers and connectors
  */
-export class EventHandlers extends CoreEventHandlers {
+export class DefaultEventHandlers extends CoreEventHandlers {
   static draggedElementShadow: HTMLElement;
   static draggedElement: DraggedElement;
   static events: { indicator: Indicator } = {
@@ -93,7 +93,7 @@ export class EventHandlers extends CoreEventHandlers {
               e.craft.stopPropagation();
               e.preventDefault();
 
-              const draggedElement = EventHandlers.draggedElement as NodeTree;
+              const draggedElement = DefaultEventHandlers.draggedElement as NodeTree;
               if (!draggedElement) {
                 return;
               }
@@ -112,7 +112,7 @@ export class EventHandlers extends CoreEventHandlers {
                 return;
               }
               this.store.actions.setIndicator(indicator);
-              EventHandlers.events = { indicator };
+              DefaultEventHandlers.events = { indicator };
             }
           ),
         ],
@@ -142,12 +142,12 @@ export class EventHandlers extends CoreEventHandlers {
                 (id) => query.node(id).get().dom
               );
 
-              EventHandlers.draggedElementShadow = createShadow(
+              DefaultEventHandlers.draggedElementShadow = createShadow(
                 e,
                 query.node(id).get().dom,
                 selectedDOMs
               );
-              EventHandlers.draggedElement = selectedElementIds;
+              DefaultEventHandlers.draggedElement = selectedElementIds;
             }
           ),
           defineEventListener('dragend', (e: CraftDOMEvent<DragEvent>) => {
@@ -181,8 +181,10 @@ export class EventHandlers extends CoreEventHandlers {
 
               const dom = e.currentTarget as HTMLElement;
 
-              EventHandlers.draggedElementShadow = createShadow(e, dom, [dom]);
-              EventHandlers.draggedElement = tree;
+              DefaultEventHandlers.draggedElementShadow = createShadow(e, dom, [
+                dom,
+              ]);
+              DefaultEventHandlers.draggedElement = tree;
             }
           ),
           defineEventListener('dragend', (e: CraftDOMEvent<DragEvent>) => {
@@ -209,7 +211,11 @@ export class EventHandlers extends CoreEventHandlers {
       placement: Indicator['placement']
     ) => void
   ) {
-    const { draggedElement, draggedElementShadow, events } = EventHandlers;
+    const {
+      draggedElement,
+      draggedElementShadow,
+      events,
+    } = DefaultEventHandlers;
     if (draggedElement && events.indicator && !events.indicator.error) {
       const { placement } = events.indicator;
       onDropNode(draggedElement, placement);
@@ -217,11 +223,11 @@ export class EventHandlers extends CoreEventHandlers {
 
     if (draggedElementShadow) {
       draggedElementShadow.parentNode.removeChild(draggedElementShadow);
-      EventHandlers.draggedElementShadow = null;
+      DefaultEventHandlers.draggedElementShadow = null;
     }
 
-    EventHandlers.draggedElement = null;
-    EventHandlers.events.indicator = null;
+    DefaultEventHandlers.draggedElement = null;
+    DefaultEventHandlers.events.indicator = null;
 
     this.store.actions.setIndicator(null);
     this.store.actions.setNodeEvent('dragged', null);

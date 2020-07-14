@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useInternalEditor } from '../editor/useInternalEditor';
 import { RenderIndicator, getDOMInfo } from '@candulabs/craft-utils';
 import movePlaceholder from './movePlaceholder';
-import { EventHandlers } from './EventHandlers';
+import { DefaultEventHandlers } from './DefaultEventHandlers';
 import { EventHandlerContext } from './EventContext';
 
 export const Events: React.FC = ({ children }) => {
@@ -11,7 +11,7 @@ export const Events: React.FC = ({ children }) => {
     indicator: state.options.indicator,
   }));
 
-  const handler = useMemo(() => new EventHandlers(store), [store]);
+  const handler = useMemo(() => new DefaultEventHandlers(store), [store]);
 
   return (
     <EventHandlerContext.Provider value={handler}>
