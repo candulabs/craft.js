@@ -1,4 +1,9 @@
 import {
+  Overwrite,
+  Delete,
+  OverwriteFnReturnType,
+} from '@candulabs/craft-utils';
+import {
   useInternalEditor,
   EditorCollector,
   useInternalEditorReturnType,
@@ -6,20 +11,49 @@ import {
 import { useMemo } from 'react';
 import { NodeId } from '../interfaces';
 
-type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U;
-type Delete<T, U> = Pick<T, Exclude<keyof T, U>>;
+type PrivateActions =
+  | 'addLinkedNodeFromTree'
+  | 'setNodeEvent'
+  | 'setDOM'
+  | 'replaceNodes'
+  | 'reset';
+
+const getPublicActions = (actions) => {
+  const {
+    addLinkedNodeFromTree,
+    setDOM,
+    setNodeEvent,
+    replaceNodes,
+    reset,
+    ...EditorActions
+  } = actions;
+
+  return EditorActions;
+};
+
+export type WithoutPrivateActions<S = null> = Delete<
+  useInternalEditorReturnType<S>['actions'],
+  PrivateActions | 'history'
+> & {
+  history: Overwrite<
+    useInternalEditorReturnType<S>['actions']['history'],
+    {
+      ignore: OverwriteFnReturnType<
+        useInternalEditorReturnType<S>['actions']['history']['ignore'],
+        PrivateActions
+      >;
+      throttle: OverwriteFnReturnType<
+        useInternalEditorReturnType<S>['actions']['history']['throttle'],
+        PrivateActions
+      >;
+    }
+  >;
+};
 
 export type useEditorReturnType<S = null> = Overwrite<
   useInternalEditorReturnType<S>,
   {
-    actions: Delete<
-      useInternalEditorReturnType<S>['actions'],
-      | 'addLinkedNodeFromTree'
-      | 'setNodeEvent'
-      | 'setDOM'
-      | 'replaceNodes'
-      | 'reset'
-    > & {
+    actions: WithoutPrivateActions & {
       selectNode: (nodeId: NodeId | null) => void;
     };
     query: Delete<useInternalEditorReturnType<S>['query'], 'deserialize'>;
@@ -38,28 +72,30 @@ export function useEditor<S>(
 export function useEditor<S>(collect?: any): useEditorReturnType<S> {
   const {
     connectors,
-    actions: {
-      addLinkedNodeFromTree,
-      setDOM,
-      setNodeEvent,
-      replaceNodes,
-      reset,
-      ...EditorActions
-    },
+    actions: internalActions,
     query: { deserialize, ...query },
     store,
     ...collected
   } = useInternalEditor(collect);
 
+  const EditorActions = getPublicActions(internalActions);
+
   const actions = useMemo(() => {
     return {
       ...EditorActions,
       selectNode: (nodeId: NodeId | null) => {
-        setNodeEvent('selected', nodeId);
-        setNodeEvent('hovered', null);
+        internalActions.setNodeEvent('selected', nodeId);
+        internalActions.setNodeEvent('hovered', null);
+      },
+      history: {
+        ...EditorActions.history,
+        ignore: (...args) =>
+          getPublicActions(EditorActions.history.ignore(...args)),
+        throttle: (...args) =>
+          getPublicActions(EditorActions.history.throttle(...args)),
       },
     };
-  }, [EditorActions, setNodeEvent]);
+  }, [EditorActions, internalActions]);
 
   return {
     connectors,
