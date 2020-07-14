@@ -36,6 +36,8 @@ describe('EventHandlers', () => {
     toNodeTree: jest.fn().mockImplementation(() => parsedNodeTree),
   }));
 
+  let selected = [];
+
   beforeEach(() => {
     EventHandlers.draggedElement = undefined;
     EventHandlers.draggedElementShadow = undefined;
@@ -55,6 +57,10 @@ describe('EventHandlers', () => {
         }),
         isDraggable: jest.fn().mockImplementation(() => isDraggable),
       })),
+      getEvent: (type) =>
+        ({
+          selected,
+        }[type]),
     };
     store = { actions, query };
     eventHandlers = new EventHandlers(store);
@@ -70,13 +76,15 @@ describe('EventHandlers', () => {
       select.init()();
       expect(actions.setNodeEvent).toHaveBeenCalledWith('selected', null);
     });
-    it('should contain one event with click', () => {
-      expect(select.events).toHaveLength(1);
+    it('should contain one event with mousedown', () => {
       expect(getHandler(select.events, 'mousedown')).toBeDefined();
+    });
+    it('should contain one event with click', () => {
+      expect(getHandler(select.events, 'click')).toBeDefined();
     });
     it('should call setNodeEvent on mousedown', () => {
       callHandler(select.events, 'mousedown')(e, nodeId);
-      expect(actions.setNodeEvent).toHaveBeenCalledWith('selected', nodeId);
+      expect(actions.setNodeEvent).toHaveBeenCalledWith('selected', [nodeId]);
     });
   });
 
@@ -214,16 +222,17 @@ describe('EventHandlers', () => {
 
     describe('dragstart', () => {
       beforeEach(() => {
+        selected = [nodeId];
         callHandler(drag.events, 'dragstart')(e, nodeId);
       });
       it('should call setNodeEvent on mousedown', () => {
-        expect(actions.setNodeEvent).toHaveBeenCalledWith('dragged', nodeId);
+        expect(actions.setNodeEvent).toHaveBeenCalledWith('dragged', [nodeId]);
       });
       it('should have called createShadow', () => {
         expect(createShadow).toHaveBeenCalled();
       });
       it('should have set the correct dragged elements', () => {
-        expect(EventHandlers.draggedElement).toEqual(nodeId);
+        expect(EventHandlers.draggedElement).toEqual([nodeId]);
         expect(EventHandlers.draggedElementShadow).toEqual(shadow);
       });
     });

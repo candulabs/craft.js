@@ -1,4 +1,4 @@
-import { createShadow, createShadowMultiple } from './createShadow';
+import { createShadow } from './createShadow';
 import { Indicator, NodeId, NodeTree } from '../interfaces';
 import {
   ConnectorsForHandlers,
@@ -34,27 +34,38 @@ export class EventHandlers extends Handlers<
 
               const { query } = this.store;
 
-              let selectedElementIds = query.getEvent('selected');
+              const selectedElementIds = query.getEvent('selected');
 
-              // Remove any selected element that is a descendant/ancestor of the current node
-              selectedElementIds = selectedElementIds.filter((selectedId) => {
-                const descendants = query.node(selectedId).descendants(true),
-                  ancestors = query.node(selectedId).ancestors(true);
+              // Remove self and any selected element that is a descendant/ancestor of the current node
+              const newSelectedElementIds = selectedElementIds.filter(
+                (selectedId) => {
+                  const descendants = query.node(selectedId).descendants(true),
+                    ancestors = query.node(selectedId).ancestors(true);
 
-                if (descendants.includes(id) || ancestors.includes(id)) {
-                  return false;
+                  if (
+                    descendants.includes(id) ||
+                    ancestors.includes(id) ||
+                    selectedId === id
+                  ) {
+                    return false;
+                  }
+
+                  return true;
                 }
+              );
 
-                return true;
-              });
+              // This condition is so we can deselect the current Node if it's clicked on again during multi-select
+              if (!selectedElementIds.includes(id) || !e.metaKey) {
+                newSelectedElementIds.push(id);
+              }
 
-              this.store.actions.setNodeEvent('selected', [
-                ...selectedElementIds,
-                id,
-              ]);
+              this.store.actions.setNodeEvent(
+                'selected',
+                newSelectedElementIds
+              );
             }
           ),
-          defineEventListener('click', (e, id) => {
+          defineEventListener('click', (e: CraftDOMEvent<MouseEvent>, id) => {
             e.craft.stopPropagation();
 
             if (e.metaKey) {
@@ -138,7 +149,7 @@ export class EventHandlers extends Handlers<
                 (id) => query.node(id).get().dom
               );
 
-              EventHandlers.draggedElementShadow = createShadowMultiple(
+              EventHandlers.draggedElementShadow = createShadow(
                 e,
                 query.node(id).get().dom,
                 selectedDOMs
@@ -149,13 +160,13 @@ export class EventHandlers extends Handlers<
           defineEventListener('dragend', (e: CraftDOMEvent<DragEvent>) => {
             e.craft.stopPropagation();
             const onDropElement = (draggedElement, placement) => {
-              draggedElement.forEach((dragId) => {
-                this.store.actions.move(
-                  dragId as NodeId,
-                  placement.parent.id,
-                  placement.index + (placement.where === 'after' ? 1 : 0)
-                );
-              });
+              const index =
+                placement.index + (placement.where === 'after' ? 1 : 0);
+              this.store.actions.move(
+                draggedElement,
+                placement.parent.id,
+                index
+              );
             };
             this.dropElement(onDropElement);
           }),
@@ -175,7 +186,9 @@ export class EventHandlers extends Handlers<
                 .parseReactElement(userElement)
                 .toNodeTree();
 
-              EventHandlers.draggedElementShadow = createShadow(e);
+              const dom = e.currentTarget as HTMLElement;
+
+              EventHandlers.draggedElementShadow = createShadow(e, dom, [dom]);
               EventHandlers.draggedElement = tree;
             }
           ),

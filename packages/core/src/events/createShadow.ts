@@ -1,4 +1,4 @@
-export const createShadowMultiple = (
+export const createShadow = (
   e: DragEvent,
   targetDOM: HTMLElement,
   shadowsToCreate: HTMLElement[]
@@ -15,8 +15,8 @@ export const createShadowMultiple = (
 
   const container = document.createElement('div');
   container.style.position = 'fixed';
-  container.style.left = '0%';
-  container.style.top = `0%`;
+  container.style.left = '-100%';
+  container.style.top = `-100%`;
   container.style.width = '100%';
   container.style.height = '100%';
   container.style.pointerEvents = 'none';
@@ -24,7 +24,7 @@ export const createShadowMultiple = (
   shadowsToCreate.forEach((dom) => {
     const shadow = dom.cloneNode(true) as HTMLElement;
     const { width, height, top, left } = dom.getBoundingClientRect();
-    shadow.style.position = `fixed`;
+    shadow.style.position = `absolute`;
     shadow.style.width = `${width}px`;
     shadow.style.height = `${height}px`;
     shadow.style.left = `${left}px`;
@@ -37,25 +37,4 @@ export const createShadowMultiple = (
   e.dataTransfer.setDragImage(container, targetLeft, targetTop);
 
   return container;
-};
-
-export const createShadow = (e: DragEvent, dom?: HTMLElement) => {
-  const domToRender = (dom || e.currentTarget) as HTMLElement;
-
-  if (!domToRender) {
-    return;
-  }
-
-  const shadow = domToRender.cloneNode(true) as HTMLElement;
-  const { width, height } = domToRender.getBoundingClientRect();
-  shadow.style.width = `${width}px`;
-  shadow.style.height = `${height}px`;
-  shadow.style.position = 'fixed';
-  shadow.style.left = '-100%';
-  shadow.style.top = '-100%';
-
-  document.body.appendChild(shadow);
-  e.dataTransfer.setDragImage(shadow, 0, 0);
-
-  return shadow;
 };
