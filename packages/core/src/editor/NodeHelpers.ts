@@ -1,4 +1,4 @@
-import { EditorState, Node, NodeId } from '../interfaces';
+import { EditorState, NodeId, NodeSelector } from '../interfaces';
 import invariant from 'tiny-invariant';
 import {
   deprecationWarning,
@@ -15,8 +15,7 @@ import {
   ROOT_NODE,
 } from '@candulabs/craft-utils';
 import { serializeNode } from '../utils/serializeNode';
-
-type NodeSelector = NodeId | Node | NodeId[] | Node[];
+import { getNodesFromSelector } from '../utils/getNodesFromSelector';
 
 export function NodeHelpers(state: EditorState, id: NodeId) {
   invariant(typeof id == 'string', ERROR_INVALID_NODE_ID);
@@ -24,50 +23,6 @@ export function NodeHelpers(state: EditorState, id: NodeId) {
   const node = state.nodes[id];
 
   const nodeHelpers = (id) => NodeHelpers(state, id);
-
-  const getNodeFromIdOrNode = (node: NodeId | Node) =>
-    typeof node === 'string' ? state.nodes[node] : node;
-
-  // TODO: use this
-  const getNodesFromNodeSelector = (
-    target: NodeSelector
-  ): Array<{ node: Node; exists: boolean }> => {
-    let nodes = [];
-
-    if (Array.isArray(target)) {
-      const item = target[0];
-
-      if (typeof item === 'object') {
-        nodes = (target as Node[]).map((targetNode) => ({
-          exists: !!state.nodes[targetNode.id],
-          node: targetNode,
-        }));
-      } else if (typeof item === 'string') {
-        nodes = (target as string[]).map((targetId) => ({
-          node: state.nodes[targetId],
-          exists: !!state.nodes[targetId],
-        }));
-      }
-    } else {
-      if (typeof target === 'object') {
-        nodes = [
-          {
-            exists: !!state.nodes[target.id],
-            node: target,
-          },
-        ];
-      } else {
-        nodes = [
-          {
-            exists: !!state.nodes[target as string],
-            node: state.nodes[target as string],
-          },
-        ];
-      }
-    }
-
-    return nodes;
-  };
 
   return {
     isCanvas() {
@@ -198,42 +153,38 @@ export function NodeHelpers(state: EditorState, id: NodeId) {
         return false;
       }
     },
-    isDroppable(
-      target: NodeId[] | NodeId | Node,
-      onError?: (err: string) => void
-    ) {
-      const isNewNode = !Array.isArray(target) && !state.nodes[target.id];
-      const targetNodes = isNewNode
-          ? [target as Node]
-          : (target as NodeId[]).map((id) => state.nodes[id]),
-        newParentNode = node;
+    isDroppable(selector: NodeSelector, onError?: (err: string) => void) {
+      const targets = getNodesFromSelector(state.nodes, selector);
+
+      const newParentNode = node;
+
       try {
         invariant(this.isCanvas(), ERROR_MOVE_TO_NONCANVAS_PARENT);
         invariant(
           newParentNode.rules.canMoveIn(
-            targetNodes,
+            targets.map((selector) => selector.node),
             newParentNode,
             nodeHelpers
           ),
           ERROR_MOVE_INCOMING_PARENT
         );
 
-        // Return if target is a new Node
-        if (isNewNode) {
-          return true;
-        }
-
         let parentNodes = {};
 
-        targetNodes.forEach((targetNode) => {
-          invariant(
-            !nodeHelpers(targetNode.id).isTopLevelNode(),
-            ERROR_MOVE_TOP_LEVEL_NODE
-          );
-
+        targets.forEach(({ node: targetNode, exists }) => {
           invariant(
             targetNode.rules.canDrop(newParentNode, targetNode, nodeHelpers),
             ERROR_MOVE_CANNOT_DROP
+          );
+
+          // Ignore other checking if the Node is new
+          if (!exists) {
+            return;
+          }
+
+          invariant(
+            !nodeHelpers(targetNode.id).isTopLevelNode(),
+            ERROR_MOVE_TOP_LEVEL_NODE
           );
 
           const targetDeepNodes = nodeHelpers(targetNode.id).descendants(true);
@@ -258,11 +209,13 @@ export function NodeHelpers(state: EditorState, id: NodeId) {
             ERROR_DUPLICATE_NODEID
           );
 
-          if (!parentNodes[currentParentNode.id]) {
-            parentNodes[currentParentNode.id] = [];
-          }
+          if (currentParentNode.id !== newParentNode.id) {
+            if (!parentNodes[currentParentNode.id]) {
+              parentNodes[currentParentNode.id] = [];
+            }
 
-          parentNodes[currentParentNode.id].push(targetNode);
+            parentNodes[currentParentNode.id].push(targetNode);
+          }
         });
 
         Object.keys(parentNodes).forEach((parentNodeId) => {

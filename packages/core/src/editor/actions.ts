@@ -5,10 +5,11 @@ import {
   Node,
   Nodes,
   Options,
-  NodeEvents,
   NodeTree,
   SerializedNodes,
   NodeEventTypes,
+  NodeSelector,
+  NodeSelectorType,
 } from '../interfaces';
 import {
   deprecationWarning,
@@ -23,6 +24,7 @@ import { QueryMethods } from './query';
 import { fromEntries } from '../utils/fromEntries';
 import { updateEventsNode } from '../utils/updateEventsNode';
 import invariant from 'tiny-invariant';
+import { getNodesFromSelector } from '../utils/getNodesFromSelector';
 
 export const Actions = (
   state: EditorState,
@@ -200,30 +202,37 @@ export const Actions = (
      * @param newParentId
      * @param index
      */
-    move(targetId: NodeId, newParentId: NodeId, index: number) {
-      const targetNode = state.nodes[targetId],
-        currentParentId = targetNode.data.parent!,
-        newParent = state.nodes[newParentId],
-        newParentNodes = newParent.data.nodes;
-
-      query.node(newParentId).isDroppable([targetId], (err) => {
-        throw new Error(err);
+    move(selector: NodeSelector, newParentId: NodeId, index: number) {
+      const targets = getNodesFromSelector(state.nodes, selector, {
+        existOnly: true,
       });
 
-      const currentParent = state.nodes[currentParentId],
-        currentParentNodes = currentParent.data.nodes!;
+      const newParent = state.nodes[newParentId];
+      const newParentNodes = newParent.data.nodes;
 
-      currentParentNodes[currentParentNodes.indexOf(targetId)] = 'marked';
+      targets.forEach(({ node: targetNode, exists }) => {
+        const targetId = targetNode.id;
+        const currentParentId = targetNode.data.parent!;
 
-      if (newParentNodes) {
-        newParentNodes.splice(index, 0, targetId);
-      } else {
-        newParent.data.nodes = [targetId];
-      }
+        query.node(newParentId).isDroppable([targetId], (err) => {
+          throw new Error(err);
+        });
 
-      state.nodes[targetId].data.parent = newParentId;
-      state.nodes[targetId].data.index = index;
-      currentParentNodes.splice(currentParentNodes.indexOf('marked'), 1);
+        const currentParent = state.nodes[currentParentId],
+          currentParentNodes = currentParent.data.nodes!;
+
+        currentParentNodes[currentParentNodes.indexOf(targetId)] = 'marked';
+
+        if (newParentNodes) {
+          newParentNodes.splice(index, 0, targetId);
+        } else {
+          newParent.data.nodes = [targetId];
+        }
+
+        state.nodes[targetId].data.parent = newParentId;
+        state.nodes[targetId].data.index = index;
+        currentParentNodes.splice(currentParentNodes.indexOf('marked'), 1);
+      });
     },
 
     replaceNodes(nodes: Nodes) {
@@ -255,11 +264,13 @@ export const Actions = (
       cb(state.options);
     },
 
-    setNodeEvent(eventType: NodeEventTypes, selector: NodeId | NodeId[]) {
-      if (state.events[eventType].size > 0) {
-        state.events[eventType].forEach(
-          (id) => (state.nodes[id].events[eventType] = false)
-        );
+    setNodeEvent(
+      eventType: NodeEventTypes,
+      selector: NodeSelector<NodeSelectorType.Id>
+    ) {
+      const current = state.events[eventType];
+      if (current.size > 0) {
+        current.forEach((id) => (state.nodes[id].events[eventType] = false));
       }
 
       state.events[eventType] = new Set();
@@ -268,13 +279,12 @@ export const Actions = (
         return;
       }
 
-      let nodeIds: Set<NodeId> = new Set();
+      const targets = getNodesFromSelector(state.nodes, selector, {
+        idOnly: true,
+        existOnly: true,
+      });
 
-      if (typeof selector === 'string') {
-        nodeIds.add(selector);
-      } else {
-        selector.forEach((id) => nodeIds.add(id));
-      }
+      let nodeIds: Set<NodeId> = new Set(targets.map(({ node }) => node.id));
 
       if (nodeIds) {
         nodeIds.forEach((id) => (state.nodes[id].events[eventType] = true));
