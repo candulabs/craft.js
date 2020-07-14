@@ -1,21 +1,14 @@
+import { defineEventListener, CraftDOMEvent } from '@candulabs/craft-utils';
 import { createShadow } from './createShadow';
 import { Indicator, NodeId, NodeTree } from '../interfaces';
-import {
-  ConnectorsForHandlers,
-  defineEventListener,
-  Handlers,
-  CraftDOMEvent,
-} from '@candulabs/craft-utils';
-import { EditorStore } from '../editor/store';
+import { CoreEventHandlers } from './CoreEventHandlers';
 
 type DraggedElement = NodeId[] | NodeTree;
 
 /**
  * Specifies Editor-wide event handlers and connectors
  */
-export class EventHandlers extends Handlers<
-  'select' | 'hover' | 'drag' | 'drop' | 'create'
-> {
+export class EventHandlers extends CoreEventHandlers {
   static draggedElementShadow: HTMLElement;
   static draggedElement: DraggedElement;
   static events: { indicator: Indicator } = {
@@ -233,34 +226,4 @@ export class EventHandlers extends Handlers<
     this.store.actions.setIndicator(null);
     this.store.actions.setNodeEvent('dragged', null);
   }
-
-  /**
-   * Create a new instance of Handlers with reference to the current EventHandlers
-   * @param type A class that extends DerivedEventHandlers
-   * @param args Additional arguments to pass to the constructor
-   */
-  derive<T extends DerivedEventHandlers<any>, U extends any[]>(
-    type: {
-      new (store: EditorStore, derived: EventHandlers, ...args: U): T;
-    },
-    ...args: U
-  ): T {
-    return new type(this.store, this, ...args);
-  }
 }
-
-/**
- *  Allows for external packages to easily extend EventHandlers
- */
-export abstract class DerivedEventHandlers<T extends string> extends Handlers<
-  T
-> {
-  derived: EventHandlers;
-
-  protected constructor(store: EditorStore, derived: EventHandlers) {
-    super(store);
-    this.derived = derived;
-  }
-}
-
-export type EventConnectors = ConnectorsForHandlers<EventHandlers>;
