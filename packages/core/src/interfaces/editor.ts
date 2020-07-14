@@ -7,8 +7,9 @@ import {
 import { NodeEventTypes, NodeId, Nodes } from './nodes';
 import { Placement } from './events';
 import { useInternalEditorReturnType } from '../editor/useInternalEditor';
-import { ActionMethodsWithConfig } from '../editor/store';
+import { ActionMethodsWithConfig, EditorStore } from '../editor/store';
 import { QueryMethods } from '../editor/query';
+import { CoreEventHandlers } from '../events';
 
 export type Options = {
   onRender: React.ComponentType<{ render: React.ReactElement }>;
@@ -16,6 +17,7 @@ export type Options = {
   resolver: Resolver;
   enabled: boolean;
   indicator: Record<'success' | 'error', string>;
+  handlers: (store: EditorStore) => CoreEventHandlers;
   normaliseNodes: (
     state: EditorState,
     previousState: EditorState,

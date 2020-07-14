@@ -1,17 +1,20 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useInternalEditor } from '../editor/useInternalEditor';
 import { RenderIndicator, getDOMInfo } from '@candulabs/craft-utils';
 import movePlaceholder from './movePlaceholder';
-import { DefaultEventHandlers } from './DefaultEventHandlers';
 import { EventHandlerContext } from './EventContext';
 
 export const Events: React.FC = ({ children }) => {
-  const { events, indicator, store } = useInternalEditor((state) => ({
+  const { events, indicator, store, handlers } = useInternalEditor((state) => ({
     events: state.events,
     indicator: state.options.indicator,
+    handlers: state.options.handlers,
   }));
 
-  const handler = useMemo(() => new DefaultEventHandlers(store), [store]);
+  const handlersRef = useRef(handlers);
+  handlersRef.current = handlers;
+
+  const handler = useMemo(() => handlersRef.current(store), [store]);
 
   return (
     <EventHandlerContext.Provider value={handler}>
