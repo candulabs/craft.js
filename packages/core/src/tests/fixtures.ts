@@ -2,6 +2,7 @@
  * Nodes
  */
 import { createTestNode } from '../utils/createTestNode';
+import { editorInitialState } from '../editor/store';
 
 export const rootNode = createTestNode('ROOT', {
   name: 'Document',
@@ -39,13 +40,7 @@ export const card = createTestNode('node-card', {
  * Editor states
  */
 export const emptyState = {
-  nodes: {},
-  events: {
-    dragged: null,
-    selected: null,
-    hovered: null,
-    indicator: null,
-  },
+  ...editorInitialState,
   options: {
     resolver: {
       Document: 'Document',
