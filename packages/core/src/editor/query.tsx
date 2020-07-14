@@ -3,7 +3,7 @@ import {
   EditorState,
   Indicator,
   Node,
-  NodeEventTypes2,
+  NodeEventTypes,
   NodeId,
   NodeInfo,
   NodeTree,
