@@ -5,6 +5,10 @@ import { CoreEventHandlers } from './CoreEventHandlers';
 
 type DraggedElement = NodeId[] | NodeTree;
 
+type DefaultEventHandlersOptions = {
+  isMultiSelectEnabled: (e) => boolean;
+};
+
 /**
  * Specifies Editor-wide event handlers and connectors
  */
@@ -14,6 +18,15 @@ export class DefaultEventHandlers extends CoreEventHandlers {
   static events: { indicator: Indicator } = {
     indicator: null,
   };
+
+  options: DefaultEventHandlersOptions;
+  constructor(store, options?: DefaultEventHandlersOptions) {
+    super(store);
+    this.options = {
+      isMultiSelectEnabled: (e: MouseEvent) => !!e.metaKey,
+      ...(options || {}),
+    };
+  }
 
   handlers() {
     return {
@@ -48,7 +61,10 @@ export class DefaultEventHandlers extends CoreEventHandlers {
               );
 
               // This condition is so we can deselect the current Node if it's clicked on again during multi-select
-              if (!selectedElementIds.includes(id) || !e.metaKey) {
+              if (
+                !selectedElementIds.includes(id) ||
+                !this.options.isMultiSelectEnabled(e)
+              ) {
                 newSelectedElementIds.push(id);
               }
 
@@ -61,7 +77,7 @@ export class DefaultEventHandlers extends CoreEventHandlers {
           defineEventListener('click', (e: CraftDOMEvent<MouseEvent>, id) => {
             e.craft.stopPropagation();
 
-            if (e.metaKey) {
+            if (this.options.isMultiSelectEnabled(e)) {
               return;
             }
 
