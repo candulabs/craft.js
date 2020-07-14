@@ -11,10 +11,10 @@ export const Events: React.FC = ({ children }) => {
     handlers: state.options.handlers,
   }));
 
-  const handlersRef = useRef(handlers);
-  handlersRef.current = handlers;
+  const storeRef = useRef(store);
+  storeRef.current = store;
 
-  const handler = useMemo(() => handlersRef.current(store), [store]);
+  const handler = useMemo(() => handlers(storeRef.current), [handlers]);
 
   return (
     <EventHandlerContext.Provider value={handler}>
