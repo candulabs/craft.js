@@ -20,12 +20,6 @@ export type UserComponent<T = any> = React.ComponentType<T> & {
 export type NodeId = string;
 export type NodeEventTypes = 'selected' | 'dragged' | 'hovered';
 
-export enum NodeEventTypes2 {
-  selected = 'selected',
-  dragged = 'dragged',
-  hovered = 'hovered',
-}
-
 export type Node = {
   id: NodeId;
   data: NodeData;
