@@ -225,5 +225,9 @@ export function QueryMethods(state: EditorState) {
 
       return node;
     },
+
+    getState() {
+      return state;
+    },
   };
 }
