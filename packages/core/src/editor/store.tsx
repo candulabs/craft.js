@@ -15,6 +15,7 @@ export const editorInitialState = {
     hovered: new Set<NodeId>(),
     indicator: null,
   },
+  handlers: null,
 };
 
 export const ActionMethodsWithConfig = {

@@ -44,6 +44,7 @@ export type EditorState = {
   nodes: Nodes;
   events: EditorEvents;
   options: Options;
+  handlers: CoreEventHandlers;
 };
 
 export type ConnectedEditor<S = null> = useInternalEditorReturnType<S>;

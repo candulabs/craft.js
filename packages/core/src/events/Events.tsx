@@ -1,23 +1,36 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useInternalEditor } from '../editor/useInternalEditor';
 import { RenderIndicator, getDOMInfo } from '@candulabs/craft-utils';
 import movePlaceholder from './movePlaceholder';
 import { EventHandlerContext } from './EventContext';
 
 export const Events: React.FC = ({ children }) => {
-  const { events, indicator, store, handlers } = useInternalEditor((state) => ({
+  const {
+    events,
+    actions,
+    indicator,
+    store,
+    handlers,
+    handlersFactory,
+  } = useInternalEditor((state) => ({
     events: state.events,
     indicator: state.options.indicator,
-    handlers: state.options.handlers,
+    handlers: state.handlers,
+    handlersFactory: state.options.handlers,
   }));
 
   const storeRef = useRef(store);
   storeRef.current = store;
 
-  const handler = useMemo(() => handlers(storeRef.current), [handlers]);
+  useEffect(() => {
+    // TODO: Let's use setState for all internal actions
+    actions.setState(
+      (state) => (state.handlers = handlersFactory(storeRef.current))
+    );
+  }, [actions, handlersFactory]);
 
-  return (
-    <EventHandlerContext.Provider value={handler}>
+  return handlers ? (
+    <EventHandlerContext.Provider value={handlers}>
       {events.indicator &&
         React.createElement(RenderIndicator, {
           style: {
@@ -35,5 +48,5 @@ export const Events: React.FC = ({ children }) => {
         })}
       {children}
     </EventHandlerContext.Provider>
-  );
+  ) : null;
 };
