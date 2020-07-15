@@ -42,29 +42,31 @@ export class DefaultEventHandlers extends CoreEventHandlers {
 
               const selectedElementIds = query.getEvent('selected');
 
+              const isMultiSelect = this.options.isMultiSelectEnabled(e);
+
               // Remove self and any selected element that is a descendant/ancestor of the current node
-              const newSelectedElementIds = selectedElementIds.filter(
-                (selectedId) => {
-                  const descendants = query.node(selectedId).descendants(true),
-                    ancestors = query.node(selectedId).ancestors(true);
+              const newSelectedElementIds =
+                isMultiSelect || selectedElementIds.includes(id)
+                  ? selectedElementIds.filter((selectedId) => {
+                      const descendants = query
+                          .node(selectedId)
+                          .descendants(true),
+                        ancestors = query.node(selectedId).ancestors(true);
 
-                  if (
-                    descendants.includes(id) ||
-                    ancestors.includes(id) ||
-                    selectedId === id
-                  ) {
-                    return false;
-                  }
+                      if (
+                        descendants.includes(id) ||
+                        ancestors.includes(id) ||
+                        selectedId === id
+                      ) {
+                        return false;
+                      }
 
-                  return true;
-                }
-              );
+                      return true;
+                    })
+                  : [];
 
-              // This condition is so we can deselect the current Node if it's clicked on again during multi-select
-              if (
-                !selectedElementIds.includes(id) ||
-                !this.options.isMultiSelectEnabled(e)
-              ) {
+              // If the current Node is selected and is in multiselect, then deselect the Node
+              if (!(selectedElementIds.includes(id) && isMultiSelect)) {
                 newSelectedElementIds.push(id);
               }
 
