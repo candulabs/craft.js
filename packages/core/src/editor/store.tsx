@@ -5,7 +5,7 @@ import {
 } from '@candulabs/craft-utils';
 import { Actions } from './actions';
 import { QueryMethods } from './query';
-import { EditorState, NodeId } from '../interfaces';
+import { EditorState, NodeEventTypes, NodeId } from '../interfaces';
 
 export const editorInitialState = {
   nodes: {},
@@ -27,18 +27,19 @@ export const ActionMethodsWithConfig = {
     'setOptions',
     'setIndicator',
   ] as const,
-  normalizeHistory: (state) => {
-    // TODO(prev): this should be handled by the general normalising function
-
+  normalizeHistory: (state: EditorState) => {
     /**
      * On every undo/redo, we remove events pointing to deleted Nodes
      */
-    Object.keys(state.events).forEach((eventName) => {
-      const nodeId = state.events[eventName];
+    Object.keys(state.events).forEach((eventName: NodeEventTypes) => {
+      // TODO: we should move "indicator" to it's own object rather than placing it in .events
+      const nodeIds = Array.from(state.events[eventName] || []);
 
-      if (!!nodeId && !state.nodes[nodeId]) {
-        state.events[eventName] = false;
-      }
+      nodeIds.forEach((id) => {
+        if (!state.nodes[id]) {
+          state.events[eventName].delete(id);
+        }
+      });
     });
 
     // Remove any invalid node[nodeId].events
@@ -47,10 +48,14 @@ export const ActionMethodsWithConfig = {
     Object.keys(state.nodes).forEach((id) => {
       const node = state.nodes[id];
 
-      Object.keys(node.events).forEach((eventName) => {
-        const isEventActive = node.events[eventName];
+      Object.keys(node.events).forEach((eventName: NodeEventTypes) => {
+        const isEventActive = !!node.events[eventName];
 
-        if (!!isEventActive && !state.events[eventName] !== node.id) {
+        if (
+          isEventActive &&
+          state.events[eventName] &&
+          !state.events[eventName].has(node.id)
+        ) {
           node.events[eventName] = false;
         }
       });

@@ -24,9 +24,11 @@ export const Events: React.FC = ({ children }) => {
 
   useEffect(() => {
     // TODO: Let's use setState for all internal actions
-    actions.setState(
-      (state) => (state.handlers = handlersFactory(storeRef.current))
-    );
+    actions.history
+      .ignore()
+      .setState(
+        (state) => (state.handlers = handlersFactory(storeRef.current))
+      );
   }, [actions, handlersFactory]);
 
   return handlers ? (
