@@ -32,7 +32,6 @@ export const ActionMethodsWithConfig = {
      * On every undo/redo, we remove events pointing to deleted Nodes
      */
     Object.keys(state.events).forEach((eventName: NodeEventTypes) => {
-      // TODO: we should move "indicator" to it's own object rather than placing it in .events
       const nodeIds = Array.from(state.events[eventName] || []);
 
       nodeIds.forEach((id) => {

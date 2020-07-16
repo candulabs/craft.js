@@ -8,13 +8,13 @@ export const Events: React.FC = ({ children }) => {
   const {
     actions,
     indicator,
-    renderIndicator,
+    indicatorOptions,
     store,
     handlers,
     handlersFactory,
   } = useInternalEditor((state) => ({
     indicator: state.indicator,
-    renderIndicator: state.options.indicator,
+    indicatorOptions: state.options.indicator,
     handlers: state.handlers,
     handlersFactory: state.options.handlers,
   }));
@@ -43,8 +43,8 @@ export const Events: React.FC = ({ children }) => {
                 getDOMInfo(indicator.placement.currentNode.dom)
             ),
             backgroundColor: indicator.error
-              ? renderIndicator.error
-              : renderIndicator.success,
+              ? indicatorOptions.error
+              : indicatorOptions.success,
             transition: '0.2s ease-in',
           },
         })}

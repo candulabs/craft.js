@@ -6,6 +6,7 @@ import {
   NodeEventTypes,
   NodeId,
   NodeInfo,
+  NodeSelector,
   NodeTree,
   Options,
   SerializedNode,
@@ -27,6 +28,7 @@ import { mergeTrees } from '../utils/mergeTrees';
 import { resolveComponent } from '../utils/resolveComponent';
 import { deserializeNode } from '../utils/deserializeNode';
 import { NodeHelpers } from './NodeHelpers';
+import { getNodesFromSelector } from '../utils/getNodesFromSelector';
 
 export function QueryMethods(state: EditorState) {
   const options = state && state.options;
@@ -39,14 +41,13 @@ export function QueryMethods(state: EditorState) {
      * Determine the best possible location to drop the source Node relative to the target Node
      */
     getDropPlaceholder: (
-      source: NodeId[] | Node,
+      source: NodeSelector,
       target: NodeId,
       pos: { x: number; y: number },
       nodesToDOM: (node: Node) => HTMLElement = (node) =>
         state.nodes[node.id].dom
     ) => {
-      const isSourceFromState = Array.isArray(source),
-        targetNode = state.nodes[target],
+      const targetNode = state.nodes[target],
         isTargetCanvas = _().node(targetNode.id).isCanvas();
 
       const targetParent = isTargetCanvas
@@ -90,14 +91,16 @@ export function QueryMethods(state: EditorState) {
         error: false,
       };
 
-      // If source Node is already in the editor, check if it's draggable
-      if (isSourceFromState) {
-        (source as NodeId[]).forEach((id) => {
+      const sourceNodes = getNodesFromSelector(state.nodes, source);
+
+      sourceNodes.forEach(({ node, exists }) => {
+        // If source Node is already in the editor, check if it's draggable
+        if (exists) {
           _()
-            .node(id)
+            .node(node.id)
             .isDraggable((err) => (output.error = err));
-        });
-      }
+        }
+      });
 
       // Check if source Node is droppable in target
       _()
@@ -134,8 +137,7 @@ export function QueryMethods(state: EditorState) {
     },
 
     getEvent(eventType: NodeEventTypes) {
-      const arr = Array.from(state.events[eventType]);
-      return arr as any;
+      return Array.from(state.events[eventType]);
     },
 
     /**
