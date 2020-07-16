@@ -22,6 +22,7 @@ import {
   ROOT_NODE,
 } from '@candulabs/craft-utils';
 import findPosition from '../events/findPosition';
+import { createNode, NewNode } from '../utils/createNode';
 import { parseNodeFromJSX } from '../utils/parseNodeFromJSX';
 import { fromEntries } from '../utils/fromEntries';
 import { mergeTrees } from '../utils/mergeTrees';
@@ -185,47 +186,34 @@ export function QueryMethods(state: EditorState) {
 
         invariant(data.type, ERROR_NOT_IN_RESOLVER);
 
-        return parseNodeFromJSX(
-          React.createElement(data.type, data.props),
-          (node) => {
-            if (id) {
-              node.id = id;
-            }
-            node.data = data;
-
-            if (node.data.parent === DEPRECATED_ROOT_NODE) {
-              node.data.parent = ROOT_NODE;
-            }
-          }
-        );
+        return _().createNode({
+          ...(id ? { id } : {}),
+          data,
+        });
       },
     }),
 
-    createNode(reactElement: React.ReactElement, extras?: any) {
-      deprecationWarning(`query.createNode(${reactElement})`, {
-        suggest: `query.parseReactElement(${reactElement}).toNodeTree()`,
+    createNode(node: NewNode, normalize?) {
+      if (React.isValidElement(node)) {
+        deprecationWarning(`query.createNode(${node})`, {
+          suggest: `query.parseReactElement(${node}).toNodeTree()`,
+        });
+      }
+
+      return createNode(node, (node) => {
+        if (node.data.parent === DEPRECATED_ROOT_NODE) {
+          node.data.parent = ROOT_NODE;
+        }
+
+        const name = resolveComponent(state.options.resolver, node.data.type);
+        invariant(name !== null, ERROR_NOT_IN_RESOLVER);
+        node.data.displayName = node.data.displayName || name;
+        node.data.name = name;
+
+        if (normalize) {
+          normalize(node);
+        }
       });
-
-      const tree = this.parseReactElement(reactElement).toNodeTree();
-
-      const node = tree.nodes[tree.rootNodeId];
-
-      if (!extras) {
-        return node;
-      }
-
-      if (extras.id) {
-        node.id = extras.id;
-      }
-
-      if (extras.data) {
-        node.data = {
-          ...node.data,
-          ...extras.data,
-        };
-      }
-
-      return node;
     },
 
     getState() {
