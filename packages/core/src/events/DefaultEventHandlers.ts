@@ -20,6 +20,7 @@ export class DefaultEventHandlers extends CoreEventHandlers {
   };
 
   options: DefaultEventHandlersOptions;
+
   constructor(store, options?: DefaultEventHandlersOptions) {
     super(store);
     this.options = {
@@ -39,31 +40,39 @@ export class DefaultEventHandlers extends CoreEventHandlers {
               e.craft.stopPropagation();
 
               const { query } = this.store;
-
               const selectedElementIds = query.getEvent('selected');
-
               const isMultiSelect = this.options.isMultiSelectEnabled(e);
 
-              // Remove self and any selected element that is a descendant/ancestor of the current node
-              const newSelectedElementIds =
-                isMultiSelect || selectedElementIds.includes(id)
-                  ? selectedElementIds.filter((selectedId) => {
-                      const descendants = query
-                          .node(selectedId)
-                          .descendants(true),
-                        ancestors = query.node(selectedId).ancestors(true);
+              let newSelectedElementIds = [];
 
-                      if (
-                        descendants.includes(id) ||
-                        ancestors.includes(id) ||
-                        selectedId === id
-                      ) {
-                        return false;
-                      }
+              /**
+               * Retain the previously select elements if the multi-select condition is enabled
+               *
+               * Or if the currentNode is already selected
+               * so users can just click to drag the selected elements around without holding the multi-select key
+               */
 
-                      return true;
-                    })
-                  : [];
+              if (isMultiSelect || selectedElementIds.includes(id)) {
+                newSelectedElementIds = selectedElementIds.filter(
+                  (selectedId) => {
+                    const descendants = query
+                      .node(selectedId)
+                      .descendants(true);
+                    const ancestors = query.node(selectedId).ancestors(true);
+
+                    // Deselect ancestors/descendants
+                    if (
+                      descendants.includes(id) ||
+                      ancestors.includes(id) ||
+                      selectedId === id
+                    ) {
+                      return false;
+                    }
+
+                    return true;
+                  }
+                );
+              }
 
               // If the current Node is selected and is in multiselect, then deselect the Node
               if (!(selectedElementIds.includes(id) && isMultiSelect)) {
@@ -152,7 +161,7 @@ export class DefaultEventHandlers extends CoreEventHandlers {
               e.craft.stopPropagation();
 
               const { query, actions } = this.store;
-              let selectedElementIds = query.getEvent('selected');
+              const selectedElementIds = query.getEvent('selected');
 
               actions.setNodeEvent('dragged', selectedElementIds);
 

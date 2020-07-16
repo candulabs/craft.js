@@ -218,8 +218,8 @@ export const Actions = (
           throw new Error(err);
         });
 
-        const currentParent = state.nodes[currentParentId],
-          currentParentNodes = currentParent.data.nodes!;
+        const currentParent = state.nodes[currentParentId];
+        const currentParentNodes = currentParent.data.nodes!;
 
         currentParentNodes[currentParentNodes.indexOf(targetId)] = 'marked';
 
@@ -284,7 +284,7 @@ export const Actions = (
         existOnly: true,
       });
 
-      let nodeIds: Set<NodeId> = new Set(targets.map(({ node }) => node.id));
+      const nodeIds: Set<NodeId> = new Set(targets.map(({ node }) => node.id));
 
       if (nodeIds) {
         nodeIds.forEach((id) => (state.nodes[id].events[eventType] = true));

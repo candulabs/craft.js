@@ -169,7 +169,7 @@ export function NodeHelpers(state: EditorState, id: NodeId) {
           ERROR_MOVE_INCOMING_PARENT
         );
 
-        let parentNodes = {};
+        const parentNodes = {};
 
         targets.forEach(({ node: targetNode, exists }) => {
           invariant(
