@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# 0.6.0 (2020-07-16)
+
+
+### Features
+
+* add multiselect ([#33](https://github.com/prevwong/craft.js/issues/33)) ([61871d7](https://github.com/prevwong/craft.js/commit/61871d721a29280705aa0e8a3a1977836a9f1f6f))
+
+
+
+
+
 # 0.5.0 (2020-07-13)
 
 
