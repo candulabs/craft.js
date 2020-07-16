@@ -53,7 +53,6 @@ describe('query', () => {
         deserializeNode = jest.fn().mockImplementation(() => data);
         createNode = jest.fn().mockImplementation(() => null);
 
-        query.createNode = createNode;
         query.parseSerializedNode(data).toNode();
       });
 
@@ -72,11 +71,35 @@ describe('query', () => {
     });
   });
 
-  describe('parseReactElement', () => {
-    describe('toNodeTree', () => {});
+  describe('parseFreshNode', () => {
+    describe('toNode', () => {
+      let data = {
+        type: 'h1',
+      };
+
+      beforeEach(() => {
+        createNode = jest.fn().mockImplementation(() => null);
+        query
+          .parseFreshNode({
+            data: {
+              type: 'h1',
+            },
+          })
+          .toNode();
+      });
+
+      it('should call createNode', () => {
+        expect(createNode).toHaveBeenCalledWith(
+          {
+            data,
+          },
+          expect.any(Function)
+        );
+      });
+    });
   });
 
-  describe('parseNodeFromReactNode', () => {
+  describe('parseReactElement', () => {
     let tree;
     const node = <h1>Hello</h1>;
     const name = 'Document';

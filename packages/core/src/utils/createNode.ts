@@ -1,5 +1,5 @@
 import React from 'react';
-import { NodeData, Node } from '../interfaces';
+import { NodeData, Node, FreshNode } from '../interfaces';
 import { produce } from 'immer';
 import { Canvas, deprecateCanvasComponent } from '../nodes/Canvas';
 import {
@@ -10,12 +10,10 @@ import {
 import { NodeProvider } from '../nodes/NodeContext';
 import { getRandomNodeId } from './getRandomNodeId';
 
-export type NewNode = {
-  id?: NodeId;
-  data: Partial<NodeData> & Required<Pick<NodeData, 'type'>>;
-};
-
-export function createNode(newNode: NewNode, normalize?: (node: Node) => void) {
+export function createNode(
+  newNode: FreshNode,
+  normalize?: (node: Node) => void
+) {
   let actualType = newNode.data.type as any;
   let id = newNode.id || getRandomNodeId();
 

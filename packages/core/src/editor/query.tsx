@@ -11,6 +11,7 @@ import {
   Options,
   SerializedNode,
   SerializedNodes,
+  FreshNode,
 } from '../interfaces';
 import invariant from 'tiny-invariant';
 import {
@@ -22,7 +23,7 @@ import {
   ROOT_NODE,
 } from '@candulabs/craft-utils';
 import findPosition from '../events/findPosition';
-import { createNode, NewNode } from '../utils/createNode';
+import { createNode } from '../utils/createNode';
 import { parseNodeFromJSX } from '../utils/parseNodeFromJSX';
 import { fromEntries } from '../utils/fromEntries';
 import { mergeTrees } from '../utils/mergeTrees';
@@ -186,34 +187,59 @@ export function QueryMethods(state: EditorState) {
 
         invariant(data.type, ERROR_NOT_IN_RESOLVER);
 
-        return _().createNode({
-          ...(id ? { id } : {}),
-          data,
+        return _()
+          .parseFreshNode({
+            ...(id ? { id } : {}),
+            data,
+          })
+          .toNode();
+      },
+    }),
+
+    parseFreshNode: (node: FreshNode) => ({
+      toNode(normalize?: (node: Node) => void): Node {
+        return createNode(node, (node) => {
+          if (node.data.parent === DEPRECATED_ROOT_NODE) {
+            node.data.parent = ROOT_NODE;
+          }
+
+          const name = resolveComponent(state.options.resolver, node.data.type);
+          invariant(name !== null, ERROR_NOT_IN_RESOLVER);
+          node.data.displayName = node.data.displayName || name;
+          node.data.name = name;
+
+          if (normalize) {
+            normalize(node);
+          }
         });
       },
     }),
 
-    createNode(node: NewNode, normalize?) {
-      if (React.isValidElement(node)) {
-        deprecationWarning(`query.createNode(${node})`, {
-          suggest: `query.parseReactElement(${node}).toNodeTree()`,
-        });
+    createNode(reactElement: React.ReactElement, extras?: any) {
+      deprecationWarning(`query.createNode(${reactElement})`, {
+        suggest: `query.parseReactElement(${reactElement}).toNodeTree()`,
+      });
+
+      const tree = this.parseReactElement(reactElement).toNodeTree();
+
+      const node = tree.nodes[tree.rootNodeId];
+
+      if (!extras) {
+        return node;
       }
 
-      return createNode(node, (node) => {
-        if (node.data.parent === DEPRECATED_ROOT_NODE) {
-          node.data.parent = ROOT_NODE;
-        }
+      if (extras.id) {
+        node.id = extras.id;
+      }
 
-        const name = resolveComponent(state.options.resolver, node.data.type);
-        invariant(name !== null, ERROR_NOT_IN_RESOLVER);
-        node.data.displayName = node.data.displayName || name;
-        node.data.name = name;
+      if (extras.data) {
+        node.data = {
+          ...node.data,
+          ...extras.data,
+        };
+      }
 
-        if (normalize) {
-          normalize(node);
-        }
-      });
+      return node;
     },
 
     getState() {
