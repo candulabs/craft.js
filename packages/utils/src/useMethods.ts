@@ -85,7 +85,7 @@ export type Action<T = any, P = any> = {
 };
 
 export type ActionUnion<R extends MethodRecordBase> = {
-  [T in keyof R]: Action<T, Parameters<R[T]>>;
+  [T in keyof R]: { type: T; payload: Parameters<R[T]> };
 }[keyof R];
 
 export type ActionByType<A, T> = A extends { type: infer T2 }

@@ -4,11 +4,12 @@ import {
   PatchListenerAction,
 } from '@candulabs/craft-utils';
 
-import { Nodes, NodeEvents, NodeId } from './nodes';
+import { NodeEventTypes, NodeId, Nodes } from './nodes';
 import { Placement } from './events';
 import { useInternalEditorReturnType } from '../editor/useInternalEditor';
-import { ActionMethodsWithConfig } from '../editor/store';
+import { ActionMethodsWithConfig, EditorStore } from '../editor/store';
 import { QueryMethods } from '../editor/query';
+import { CoreEventHandlers } from '../events';
 
 export type Options = {
   onRender: React.ComponentType<{ render: React.ReactElement }>;
@@ -16,6 +17,7 @@ export type Options = {
   resolver: Resolver;
   enabled: boolean;
   indicator: Record<'success' | 'error', string>;
+  handlers: (store: EditorStore) => CoreEventHandlers;
   normaliseNodes: (
     state: EditorState,
     previousState: EditorState,
@@ -34,14 +36,14 @@ export interface Indicator {
   error: string | false;
 }
 
-export type EditorEvents = Record<NodeEvents, NodeId | null> & {
-  indicator: Indicator | null;
-};
+export type EditorEvents = Record<NodeEventTypes, Set<NodeId>>;
 
 export type EditorState = {
   nodes: Nodes;
   events: EditorEvents;
   options: Options;
+  handlers: CoreEventHandlers;
+  indicator: Indicator;
 };
 
 export type ConnectedEditor<S = null> = useInternalEditorReturnType<S>;

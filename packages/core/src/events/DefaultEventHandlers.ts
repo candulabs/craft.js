@@ -1,26 +1,31 @@
+import { defineEventListener, CraftDOMEvent } from '@candulabs/craft-utils';
 import { createShadow } from './createShadow';
 import { Indicator, NodeId, NodeTree } from '../interfaces';
-import {
-  ConnectorsForHandlers,
-  defineEventListener,
-  Handlers,
-  CraftDOMEvent,
-} from '@candulabs/craft-utils';
-import { EditorStore } from '../editor/store';
+import { CoreEventHandlers } from './CoreEventHandlers';
 
-type DraggedElement = NodeId | NodeTree;
+type DraggedElement = NodeId[] | NodeTree;
+
+type DefaultEventHandlersOptions = {
+  isMultiSelectEnabled: (e) => boolean;
+};
 
 /**
  * Specifies Editor-wide event handlers and connectors
  */
-export class EventHandlers extends Handlers<
-  'select' | 'hover' | 'drag' | 'drop' | 'create'
-> {
+export class DefaultEventHandlers extends CoreEventHandlers {
   static draggedElementShadow: HTMLElement;
   static draggedElement: DraggedElement;
-  static events: { indicator: Indicator } = {
-    indicator: null,
-  };
+  static indicator: Indicator = null;
+
+  options: DefaultEventHandlersOptions;
+
+  constructor(store, options?: DefaultEventHandlersOptions) {
+    super(store);
+    this.options = {
+      isMultiSelectEnabled: (e: MouseEvent) => !!e.metaKey,
+      ...(options || {}),
+    };
+  }
 
   handlers() {
     return {
@@ -31,9 +36,62 @@ export class EventHandlers extends Handlers<
             'mousedown',
             (e: CraftDOMEvent<MouseEvent>, id: NodeId) => {
               e.craft.stopPropagation();
-              this.store.actions.setNodeEvent('selected', id);
+
+              const { query } = this.store;
+              const selectedElementIds = query.getEvent('selected');
+              const isMultiSelect = this.options.isMultiSelectEnabled(e);
+
+              let newSelectedElementIds = [];
+
+              /**
+               * Retain the previously select elements if the multi-select condition is enabled
+               *
+               * Or if the currentNode is already selected
+               * so users can just click to drag the selected elements around without holding the multi-select key
+               */
+
+              if (isMultiSelect || selectedElementIds.includes(id)) {
+                newSelectedElementIds = selectedElementIds.filter(
+                  (selectedId) => {
+                    const descendants = query
+                      .node(selectedId)
+                      .descendants(true);
+                    const ancestors = query.node(selectedId).ancestors(true);
+
+                    // Deselect ancestors/descendants
+                    if (
+                      descendants.includes(id) ||
+                      ancestors.includes(id) ||
+                      selectedId === id
+                    ) {
+                      return false;
+                    }
+
+                    return true;
+                  }
+                );
+              }
+
+              // If the current Node is selected and is in multiselect, then deselect the Node
+              if (!(selectedElementIds.includes(id) && isMultiSelect)) {
+                newSelectedElementIds.push(id);
+              }
+
+              this.store.actions.setNodeEvent(
+                'selected',
+                newSelectedElementIds
+              );
             }
           ),
+          defineEventListener('click', (e: CraftDOMEvent<MouseEvent>, id) => {
+            e.craft.stopPropagation();
+
+            if (this.options.isMultiSelectEnabled(e)) {
+              return;
+            }
+
+            this.store.actions.setNodeEvent('selected', [id]);
+          }),
         ],
       },
       hover: {
@@ -60,7 +118,7 @@ export class EventHandlers extends Handlers<
               e.craft.stopPropagation();
               e.preventDefault();
 
-              const draggedElement = EventHandlers.draggedElement as NodeTree;
+              const draggedElement = DefaultEventHandlers.draggedElement as NodeTree;
               if (!draggedElement) {
                 return;
               }
@@ -79,7 +137,7 @@ export class EventHandlers extends Handlers<
                 return;
               }
               this.store.actions.setIndicator(indicator);
-              EventHandlers.events = { indicator };
+              DefaultEventHandlers.indicator = indicator;
             }
           ),
         ],
@@ -99,22 +157,35 @@ export class EventHandlers extends Handlers<
             'dragstart',
             (e: CraftDOMEvent<DragEvent>, id: NodeId) => {
               e.craft.stopPropagation();
-              this.store.actions.setNodeEvent('dragged', id);
 
-              const dom = this.store.query.node(id).get().dom;
+              const { query, actions } = this.store;
+              const selectedElementIds = query.getEvent('selected');
 
-              EventHandlers.draggedElementShadow = createShadow(e, dom);
-              EventHandlers.draggedElement = id;
+              actions.setNodeEvent('dragged', selectedElementIds);
+
+              const selectedDOMs = selectedElementIds.map(
+                (id) => query.node(id).get().dom
+              );
+
+              DefaultEventHandlers.draggedElementShadow = createShadow(
+                e,
+                query.node(id).get().dom,
+                selectedDOMs
+              );
+              DefaultEventHandlers.draggedElement = selectedElementIds;
             }
           ),
           defineEventListener('dragend', (e: CraftDOMEvent<DragEvent>) => {
             e.craft.stopPropagation();
-            const onDropElement = (draggedElement, placement) =>
+            const onDropElement = (draggedElement, placement) => {
+              const index =
+                placement.index + (placement.where === 'after' ? 1 : 0);
               this.store.actions.move(
-                draggedElement as NodeId,
+                draggedElement,
                 placement.parent.id,
-                placement.index + (placement.where === 'after' ? 1 : 0)
+                index
               );
+            };
             this.dropElement(onDropElement);
           }),
         ],
@@ -133,8 +204,12 @@ export class EventHandlers extends Handlers<
                 .parseReactElement(userElement)
                 .toNodeTree();
 
-              EventHandlers.draggedElementShadow = createShadow(e);
-              EventHandlers.draggedElement = tree;
+              const dom = e.currentTarget as HTMLElement;
+
+              DefaultEventHandlers.draggedElementShadow = createShadow(e, dom, [
+                dom,
+              ]);
+              DefaultEventHandlers.draggedElement = tree;
             }
           ),
           defineEventListener('dragend', (e: CraftDOMEvent<DragEvent>) => {
@@ -161,51 +236,25 @@ export class EventHandlers extends Handlers<
       placement: Indicator['placement']
     ) => void
   ) {
-    const { draggedElement, draggedElementShadow, events } = EventHandlers;
-    if (draggedElement && events.indicator && !events.indicator.error) {
-      const { placement } = events.indicator;
+    const {
+      draggedElement,
+      draggedElementShadow,
+      indicator,
+    } = DefaultEventHandlers;
+    if (draggedElement && indicator && !indicator.error) {
+      const { placement } = indicator;
       onDropNode(draggedElement, placement);
     }
 
     if (draggedElementShadow) {
       draggedElementShadow.parentNode.removeChild(draggedElementShadow);
-      EventHandlers.draggedElementShadow = null;
+      DefaultEventHandlers.draggedElementShadow = null;
     }
 
-    EventHandlers.draggedElement = null;
-    EventHandlers.events.indicator = null;
+    DefaultEventHandlers.draggedElement = null;
+    DefaultEventHandlers.indicator = null;
 
     this.store.actions.setIndicator(null);
     this.store.actions.setNodeEvent('dragged', null);
   }
-
-  /**
-   * Create a new instance of Handlers with reference to the current EventHandlers
-   * @param type A class that extends DerivedEventHandlers
-   * @param args Additional arguments to pass to the constructor
-   */
-  derive<T extends DerivedEventHandlers<any>, U extends any[]>(
-    type: {
-      new (store: EditorStore, derived: EventHandlers, ...args: U): T;
-    },
-    ...args: U
-  ): T {
-    return new type(this.store, this, ...args);
-  }
 }
-
-/**
- *  Allows for external packages to easily extend EventHandlers
- */
-export abstract class DerivedEventHandlers<T extends string> extends Handlers<
-  T
-> {
-  derived: EventHandlers;
-
-  protected constructor(store: EditorStore, derived: EventHandlers) {
-    super(store);
-    this.derived = derived;
-  }
-}
-
-export type EventConnectors = ConnectorsForHandlers<EventHandlers>;

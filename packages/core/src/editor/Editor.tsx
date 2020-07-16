@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 
 import { Options } from '../interfaces';
-import { Events } from '../events';
+import { DefaultEventHandlers, Events } from '../events';
 
 import { useEditorStore } from './store';
 import { EditorContext } from './EditorContext';
@@ -16,6 +16,7 @@ export const withDefaults = (options: Partial<Options> = {}) => ({
     error: 'red',
     success: 'rgb(98, 196, 98)',
   },
+  handlers: (store) => new DefaultEventHandlers(store),
   ...options,
 });
 

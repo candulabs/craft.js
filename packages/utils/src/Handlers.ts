@@ -73,10 +73,13 @@ class WatchHandler {
     this.opts = opts;
     this.handler = handler;
 
+    const currentHandler = store.query.getState().handlers;
+
     this.unsubscribe = store.subscribe(
-      (state) => ({ enabled: state.options.enabled }),
-      ({ enabled }) => {
-        if (!document.body.contains(el)) {
+      (state) => ({ enabled: state.options.enabled, handler: state.handlers }),
+      ({ enabled, handler }) => {
+        // Cleanup if the DOM element was removed or if the Handler is swapped for another
+        if (!document.body.contains(el) || handler !== currentHandler) {
           this.remove();
           return this.unsubscribe();
         }

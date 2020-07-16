@@ -18,11 +18,12 @@ export type UserComponent<T = any> = React.ComponentType<T> & {
 };
 
 export type NodeId = string;
+export type NodeEventTypes = 'selected' | 'dragged' | 'hovered';
 
 export type Node = {
   id: NodeId;
   data: NodeData;
-  events: NodeRefEvent;
+  events: Record<NodeEventTypes, boolean>;
   dom: HTMLElement | null;
   related: Record<string, React.ElementType>;
   rules: NodeRules;
@@ -30,13 +31,11 @@ export type Node = {
 };
 
 export type NodeHelpers = QueryCallbacksFor<typeof QueryMethods>['node'];
-export type NodeEvents = 'selected' | 'dragged' | 'hovered';
-export type NodeRefEvent = Record<NodeEvents, boolean>;
 export type NodeRules = {
   canDrag(node: Node, helpers: NodeHelpers): boolean;
   canDrop(dropTarget: Node, self: Node, helpers: NodeHelpers): boolean;
-  canMoveIn(canMoveIn: Node, self: Node, helpers: NodeHelpers): boolean;
-  canMoveOut(canMoveOut: Node, self: Node, helpers: NodeHelpers): boolean;
+  canMoveIn(canMoveIn: Node[], self: Node, helpers: NodeHelpers): boolean;
+  canMoveOut(canMoveOut: Node[], self: Node, helpers: NodeHelpers): boolean;
 };
 export type NodeRelated = Record<string, React.ElementType>;
 
@@ -91,3 +90,25 @@ export interface NodeTree {
   rootNodeId: NodeId;
   nodes: Nodes;
 }
+
+type NodeIdSelector = NodeId | NodeId[];
+type NodeObjSelector = Node | Node[];
+
+export enum NodeSelectorType {
+  Any,
+  Id,
+  Obj,
+}
+
+export type NodeSelector<
+  T extends NodeSelectorType = NodeSelectorType.Any
+> = T extends NodeSelectorType.Id
+  ? NodeIdSelector
+  : T extends NodeSelectorType.Obj
+  ? NodeObjSelector
+  : NodeIdSelector | NodeObjSelector;
+
+export type NodeSelectorWrapper = {
+  node: Node;
+  exists: boolean;
+};

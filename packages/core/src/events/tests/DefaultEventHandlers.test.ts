@@ -1,4 +1,4 @@
-import { EventHandlers } from '../EventHandlers';
+import { DefaultEventHandlers } from '../DefaultEventHandlers';
 
 let shadow;
 let createShadow = jest.fn().mockImplementation(() => shadow);
@@ -36,9 +36,11 @@ describe('EventHandlers', () => {
     toNodeTree: jest.fn().mockImplementation(() => parsedNodeTree),
   }));
 
+  let selected = [];
+
   beforeEach(() => {
-    EventHandlers.draggedElement = undefined;
-    EventHandlers.draggedElementShadow = undefined;
+    DefaultEventHandlers.draggedElement = undefined;
+    DefaultEventHandlers.draggedElementShadow = undefined;
 
     actions = {
       addNodeTree: jest.fn(),
@@ -55,9 +57,13 @@ describe('EventHandlers', () => {
         }),
         isDraggable: jest.fn().mockImplementation(() => isDraggable),
       })),
+      getEvent: (type) =>
+        ({
+          selected,
+        }[type]),
     };
     store = { actions, query };
-    eventHandlers = new EventHandlers(store);
+    eventHandlers = new DefaultEventHandlers(store);
   });
 
   describe('handlers.select', () => {
@@ -70,13 +76,15 @@ describe('EventHandlers', () => {
       select.init()();
       expect(actions.setNodeEvent).toHaveBeenCalledWith('selected', null);
     });
-    it('should contain one event with click', () => {
-      expect(select.events).toHaveLength(1);
+    it('should contain one event with mousedown', () => {
       expect(getHandler(select.events, 'mousedown')).toBeDefined();
+    });
+    it('should contain one event with click', () => {
+      expect(getHandler(select.events, 'click')).toBeDefined();
     });
     it('should call setNodeEvent on mousedown', () => {
       callHandler(select.events, 'mousedown')(e, nodeId);
-      expect(actions.setNodeEvent).toHaveBeenCalledWith('selected', nodeId);
+      expect(actions.setNodeEvent).toHaveBeenCalledWith('selected', [nodeId]);
     });
   });
 
@@ -135,11 +143,11 @@ describe('EventHandlers', () => {
 
     describe('dragenter with a dragged element and a placeholder', () => {
       const coordinates = { x: 130, y: 310 };
-      const draggedElement = 'an element';
+      const draggedElement = 'an element' as any;
       const indicator = 'an indicator';
 
       beforeEach(() => {
-        EventHandlers.draggedElement = draggedElement;
+        DefaultEventHandlers.draggedElement = draggedElement;
         query.getDropPlaceholder.mockImplementationOnce(() => indicator);
         e.clientY = coordinates.y;
         e.clientX = coordinates.x;
@@ -159,7 +167,7 @@ describe('EventHandlers', () => {
         expect(actions.setIndicator).toHaveBeenCalledWith(indicator);
       });
       it('should have set EventHandlers.evenst', () => {
-        expect(EventHandlers.events).toEqual({ indicator });
+        expect(DefaultEventHandlers.indicator).toEqual(indicator);
       });
     });
   });
@@ -214,25 +222,25 @@ describe('EventHandlers', () => {
 
     describe('dragstart', () => {
       beforeEach(() => {
+        selected = [nodeId];
         callHandler(drag.events, 'dragstart')(e, nodeId);
       });
       it('should call setNodeEvent on mousedown', () => {
-        expect(actions.setNodeEvent).toHaveBeenCalledWith('dragged', nodeId);
+        expect(actions.setNodeEvent).toHaveBeenCalledWith('dragged', [nodeId]);
       });
       it('should have called createShadow', () => {
         expect(createShadow).toHaveBeenCalled();
       });
       it('should have set the correct dragged elements', () => {
-        expect(EventHandlers.draggedElement).toEqual(nodeId);
-        expect(EventHandlers.draggedElementShadow).toEqual(shadow);
+        expect(DefaultEventHandlers.draggedElement).toEqual([nodeId]);
+        expect(DefaultEventHandlers.draggedElementShadow).toEqual(shadow);
       });
     });
 
     describe('dragend', () => {
-      const events = {
-        indicator: {
-          placement: { parent: { id: 1 }, where: 'after', index: 1 },
-        },
+      const indicator = {
+        placement: { parent: { id: 1 }, where: 'after', index: 1 },
+        error: null,
       };
 
       describe('if there are no elements or events', () => {
@@ -246,8 +254,8 @@ describe('EventHandlers', () => {
 
       describe('if there are all the events', () => {
         beforeEach(() => {
-          EventHandlers.events = { ...events } as any;
-          EventHandlers.draggedElement = nodeId;
+          DefaultEventHandlers.indicator = indicator as any;
+          DefaultEventHandlers.draggedElement = nodeId as any;
           callHandler(drag.events, 'dragend')(e, nodeId);
         });
         it('should have called the right actions', () => {
@@ -255,13 +263,13 @@ describe('EventHandlers', () => {
           expect(actions.setNodeEvent).toHaveBeenCalledWith('dragged', null);
         });
         it('should have reset all the variables', () => {
-          expect(EventHandlers.draggedElement).toBe(null);
-          expect(EventHandlers.draggedElementShadow).toBe(undefined);
+          expect(DefaultEventHandlers.draggedElement).toBe(null);
+          expect(DefaultEventHandlers.draggedElementShadow).toBe(undefined);
         });
         it('should have call move', () => {
           expect(actions.move).toHaveBeenCalledWith(
             nodeId,
-            events.indicator.placement.parent.id,
+            indicator.placement.parent.id,
             2
           );
         });
@@ -311,16 +319,14 @@ describe('EventHandlers', () => {
         expect(createShadow).toHaveBeenCalled();
       });
       it('should have set the correct dragged elements', () => {
-        expect(EventHandlers.draggedElement).toEqual(node);
-        expect(EventHandlers.draggedElementShadow).toEqual(shadow);
+        expect(DefaultEventHandlers.draggedElement).toEqual(node);
+        expect(DefaultEventHandlers.draggedElementShadow).toEqual(shadow);
       });
     });
 
     describe('dragend', () => {
-      const events = {
-        indicator: {
-          placement: { parent: { id: 1 }, where: 'before', index: 1 },
-        },
+      const indicator = {
+        placement: { parent: { id: 1 }, where: 'before', index: 1 },
       };
 
       describe('if there are no elements or events', () => {
@@ -334,8 +340,8 @@ describe('EventHandlers', () => {
 
       describe('if there are all the events', () => {
         beforeEach(() => {
-          EventHandlers.events = { ...events } as any;
-          EventHandlers.draggedElement = nodeId;
+          DefaultEventHandlers.indicator = indicator as any;
+          DefaultEventHandlers.draggedElement = nodeId as any;
           callHandler(create.events, 'dragend')(e, nodeId);
         });
         it('should have called the right actions', () => {
@@ -343,14 +349,14 @@ describe('EventHandlers', () => {
           expect(actions.setNodeEvent).toHaveBeenCalledWith('dragged', null);
         });
         it('should have reset all the variables', () => {
-          expect(EventHandlers.draggedElement).toBe(null);
-          expect(EventHandlers.draggedElementShadow).toBe(undefined);
+          expect(DefaultEventHandlers.draggedElement).toBe(null);
+          expect(DefaultEventHandlers.draggedElementShadow).toBe(undefined);
         });
         it('should have call addNodeTree', () => {
           expect(actions.addNodeTree).toHaveBeenCalledWith(
             nodeId,
-            events.indicator.placement.parent.id,
-            events.indicator.placement.index
+            indicator.placement.parent.id,
+            indicator.placement.index
           );
         });
       });
