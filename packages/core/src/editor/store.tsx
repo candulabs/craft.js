@@ -13,8 +13,8 @@ export const editorInitialState = {
     dragged: new Set<NodeId>(),
     selected: new Set<NodeId>(),
     hovered: new Set<NodeId>(),
-    indicator: null,
   },
+  indicator: null,
   handlers: null,
 };
 

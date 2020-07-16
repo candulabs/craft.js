@@ -143,7 +143,7 @@ describe('EventHandlers', () => {
 
     describe('dragenter with a dragged element and a placeholder', () => {
       const coordinates = { x: 130, y: 310 };
-      const draggedElement = 'an element';
+      const draggedElement = 'an element' as any;
       const indicator = 'an indicator';
 
       beforeEach(() => {
@@ -167,7 +167,7 @@ describe('EventHandlers', () => {
         expect(actions.setIndicator).toHaveBeenCalledWith(indicator);
       });
       it('should have set EventHandlers.evenst', () => {
-        expect(DefaultEventHandlers.events).toEqual({ indicator });
+        expect(DefaultEventHandlers.indicator).toEqual(indicator);
       });
     });
   });
@@ -238,10 +238,9 @@ describe('EventHandlers', () => {
     });
 
     describe('dragend', () => {
-      const events = {
-        indicator: {
-          placement: { parent: { id: 1 }, where: 'after', index: 1 },
-        },
+      const indicator = {
+        placement: { parent: { id: 1 }, where: 'after', index: 1 },
+        error: null,
       };
 
       describe('if there are no elements or events', () => {
@@ -255,8 +254,8 @@ describe('EventHandlers', () => {
 
       describe('if there are all the events', () => {
         beforeEach(() => {
-          DefaultEventHandlers.events = { ...events } as any;
-          DefaultEventHandlers.draggedElement = nodeId;
+          DefaultEventHandlers.indicator = indicator as any;
+          DefaultEventHandlers.draggedElement = nodeId as any;
           callHandler(drag.events, 'dragend')(e, nodeId);
         });
         it('should have called the right actions', () => {
@@ -270,7 +269,7 @@ describe('EventHandlers', () => {
         it('should have call move', () => {
           expect(actions.move).toHaveBeenCalledWith(
             nodeId,
-            events.indicator.placement.parent.id,
+            indicator.placement.parent.id,
             2
           );
         });
@@ -326,10 +325,8 @@ describe('EventHandlers', () => {
     });
 
     describe('dragend', () => {
-      const events = {
-        indicator: {
-          placement: { parent: { id: 1 }, where: 'before', index: 1 },
-        },
+      const indicator = {
+        placement: { parent: { id: 1 }, where: 'before', index: 1 },
       };
 
       describe('if there are no elements or events', () => {
@@ -343,7 +340,7 @@ describe('EventHandlers', () => {
 
       describe('if there are all the events', () => {
         beforeEach(() => {
-          DefaultEventHandlers.events = { ...events } as any;
+          DefaultEventHandlers.indicator = indicator as any;
           DefaultEventHandlers.draggedElement = nodeId as any;
           callHandler(create.events, 'dragend')(e, nodeId);
         });
@@ -358,8 +355,8 @@ describe('EventHandlers', () => {
         it('should have call addNodeTree', () => {
           expect(actions.addNodeTree).toHaveBeenCalledWith(
             nodeId,
-            events.indicator.placement.parent.id,
-            events.indicator.placement.index
+            indicator.placement.parent.id,
+            indicator.placement.index
           );
         });
       });

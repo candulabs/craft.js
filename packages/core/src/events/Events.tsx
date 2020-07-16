@@ -6,15 +6,15 @@ import { EventHandlerContext } from './EventContext';
 
 export const Events: React.FC = ({ children }) => {
   const {
-    events,
     actions,
     indicator,
+    renderIndicator,
     store,
     handlers,
     handlersFactory,
   } = useInternalEditor((state) => ({
-    events: state.events,
-    indicator: state.options.indicator,
+    indicator: state.indicator,
+    renderIndicator: state.options.indicator,
     handlers: state.handlers,
     handlersFactory: state.options.handlers,
   }));
@@ -33,18 +33,18 @@ export const Events: React.FC = ({ children }) => {
 
   return handlers ? (
     <EventHandlerContext.Provider value={handlers}>
-      {events.indicator &&
+      {indicator &&
         React.createElement(RenderIndicator, {
           style: {
             ...movePlaceholder(
-              events.indicator.placement,
-              getDOMInfo(events.indicator.placement.parent.dom),
-              events.indicator.placement.currentNode &&
-                getDOMInfo(events.indicator.placement.currentNode.dom)
+              indicator.placement,
+              getDOMInfo(indicator.placement.parent.dom),
+              indicator.placement.currentNode &&
+                getDOMInfo(indicator.placement.currentNode.dom)
             ),
-            backgroundColor: events.indicator.error
-              ? indicator.error
-              : indicator.success,
+            backgroundColor: indicator.error
+              ? renderIndicator.error
+              : renderIndicator.success,
             transition: '0.2s ease-in',
           },
         })}

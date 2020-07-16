@@ -15,9 +15,7 @@ type DefaultEventHandlersOptions = {
 export class DefaultEventHandlers extends CoreEventHandlers {
   static draggedElementShadow: HTMLElement;
   static draggedElement: DraggedElement;
-  static events: { indicator: Indicator } = {
-    indicator: null,
-  };
+  static indicator: Indicator = null;
 
   options: DefaultEventHandlersOptions;
 
@@ -139,7 +137,7 @@ export class DefaultEventHandlers extends CoreEventHandlers {
                 return;
               }
               this.store.actions.setIndicator(indicator);
-              DefaultEventHandlers.events = { indicator };
+              DefaultEventHandlers.indicator = indicator;
             }
           ),
         ],
@@ -241,10 +239,10 @@ export class DefaultEventHandlers extends CoreEventHandlers {
     const {
       draggedElement,
       draggedElementShadow,
-      events,
+      indicator,
     } = DefaultEventHandlers;
-    if (draggedElement && events.indicator && !events.indicator.error) {
-      const { placement } = events.indicator;
+    if (draggedElement && indicator && !indicator.error) {
+      const { placement } = indicator;
       onDropNode(draggedElement, placement);
     }
 
@@ -254,7 +252,7 @@ export class DefaultEventHandlers extends CoreEventHandlers {
     }
 
     DefaultEventHandlers.draggedElement = null;
-    DefaultEventHandlers.events.indicator = null;
+    DefaultEventHandlers.indicator = null;
 
     this.store.actions.setIndicator(null);
     this.store.actions.setNodeEvent('dragged', null);

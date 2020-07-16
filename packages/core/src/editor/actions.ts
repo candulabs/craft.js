@@ -323,7 +323,7 @@ export const Actions = (
             !indicator.placement.currentNode.dom))
       )
         return;
-      state.events.indicator = indicator;
+      state.indicator = indicator;
     },
 
     /**
