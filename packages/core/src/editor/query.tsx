@@ -11,6 +11,7 @@ import {
   Options,
   SerializedNode,
   SerializedNodes,
+  FreshNode,
 } from '../interfaces';
 import invariant from 'tiny-invariant';
 import {
@@ -22,6 +23,7 @@ import {
   ROOT_NODE,
 } from '@candulabs/craft-utils';
 import findPosition from '../events/findPosition';
+import { createNode } from '../utils/createNode';
 import { parseNodeFromJSX } from '../utils/parseNodeFromJSX';
 import { fromEntries } from '../utils/fromEntries';
 import { mergeTrees } from '../utils/mergeTrees';
@@ -185,19 +187,31 @@ export function QueryMethods(state: EditorState) {
 
         invariant(data.type, ERROR_NOT_IN_RESOLVER);
 
-        return parseNodeFromJSX(
-          React.createElement(data.type, data.props),
-          (node) => {
-            if (id) {
-              node.id = id;
-            }
-            node.data = data;
+        return _()
+          .parseFreshNode({
+            ...(id ? { id } : {}),
+            data,
+          })
+          .toNode();
+      },
+    }),
 
-            if (node.data.parent === DEPRECATED_ROOT_NODE) {
-              node.data.parent = ROOT_NODE;
-            }
+    parseFreshNode: (node: FreshNode) => ({
+      toNode(normalize?: (node: Node) => void): Node {
+        return createNode(node, (node) => {
+          if (node.data.parent === DEPRECATED_ROOT_NODE) {
+            node.data.parent = ROOT_NODE;
           }
-        );
+
+          const name = resolveComponent(state.options.resolver, node.data.type);
+          invariant(name !== null, ERROR_NOT_IN_RESOLVER);
+          node.data.displayName = node.data.displayName || name;
+          node.data.name = name;
+
+          if (normalize) {
+            normalize(node);
+          }
+        });
       },
     }),
 
