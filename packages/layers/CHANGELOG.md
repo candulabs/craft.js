@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# 0.7.0 (2020-07-17)
+
+
+### Features
+
+* add parseFreshNode ([#34](https://github.com/prevwong/craft.js/issues/34)) ([be00ef9](https://github.com/prevwong/craft.js/commit/be00ef90cf57273230a2246e68e9a4120c18434d))
+
+
+
+
+
 # 0.6.0 (2020-07-16)
 
 
