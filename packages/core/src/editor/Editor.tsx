@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { HISTORY_ACTIONS } from '@candulabs/craft-utils';
 
 import { Options } from '../interfaces';
 import { DefaultEventHandlers, Events } from '../events';
@@ -45,14 +46,16 @@ export const Editor: React.FC<Partial<Options>> = ({
         let actionType = actionPerformed.type;
 
         if (
-          ['runWithoutHistory', 'throttleHistory'].includes(actionType) &&
+          [HISTORY_ACTIONS.IGNORE, HISTORY_ACTIONS.THROTTLE].includes(
+            actionType
+          ) &&
           actionPerformed.params
         ) {
-          actionType = actionPerformed.params[0];
+          actionPerformed.type = actionPerformed.params[0];
         }
 
         if (
-          ['setState', 'deserialize'].includes(actionType) ||
+          ['setState', 'deserialize'].includes(actionPerformed.type) ||
           isModifyingNodeData
         ) {
           if (normaliseNodes) {

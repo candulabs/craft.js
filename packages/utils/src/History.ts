@@ -8,10 +8,10 @@ type Timeline = Array<{
 }>;
 
 export const HISTORY_ACTIONS = {
-  UNDO: 'UNDO',
-  REDO: 'REDO',
-  THROTTLE: 'THROTTLE',
-  IGNORE: 'IGNORE',
+  UNDO: 'HISTORY_UNDO',
+  REDO: 'HISTORY_REDO',
+  THROTTLE: 'HISTORY_THROTTLE',
+  IGNORE: 'HISTORY_IGNORE',
 };
 
 export class History {
