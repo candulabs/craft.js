@@ -20,6 +20,12 @@ export function EventHelpers(state: EditorState, eventType: NodeEventTypes) {
     all() {
       return Array.from(event);
     },
+    size() {
+      return this.all().length;
+    },
+    at(i: number) {
+      return this.all()[i];
+    },
     raw() {
       return event;
     },

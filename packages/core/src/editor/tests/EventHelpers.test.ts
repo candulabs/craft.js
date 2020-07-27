@@ -57,4 +57,16 @@ describe('EventHelpers', () => {
       expect(helper('selected').raw()).toBe(state.events['selected']);
     });
   });
+
+  describe('size', () => {
+    it('should return the event state size', () => {
+      expect(helper('selected').size()).toBe(3);
+    });
+  });
+
+  describe('at', () => {
+    it('should return the event state at the specified index', () => {
+      expect(helper('selected').at(1)).toBe(selectedNodeIds[1]);
+    });
+  });
 });
