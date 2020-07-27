@@ -30,6 +30,7 @@ import { mergeTrees } from '../utils/mergeTrees';
 import { resolveComponent } from '../utils/resolveComponent';
 import { deserializeNode } from '../utils/deserializeNode';
 import { NodeHelpers } from './NodeHelpers';
+import { EventHelpers } from './EventHelpers';
 import { getNodesFromSelector } from '../utils/getNodesFromSelector';
 
 export function QueryMethods(state: EditorState) {
@@ -139,7 +140,7 @@ export function QueryMethods(state: EditorState) {
     },
 
     getEvent(eventType: NodeEventTypes) {
-      return Array.from(state.events[eventType]);
+      return EventHelpers(state, eventType);
     },
 
     /**
