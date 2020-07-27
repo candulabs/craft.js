@@ -1,12 +1,4 @@
 import { EventHelpers } from '../EventHelpers';
-import {
-  card,
-  documentWithVariousNodes,
-  primaryButton,
-  rootNode,
-  secondaryButton,
-} from '../../tests/fixtures';
-import { serializeNode } from '../../utils/serializeNode';
 
 let helper;
 
