@@ -1,7 +1,7 @@
-import { defineEventListener, CraftDOMEvent } from '@candulabs/craft-utils';
 import { createShadow } from './createShadow';
-import { Indicator, NodeId, NodeTree } from '../interfaces';
 import { CoreEventHandlers } from './CoreEventHandlers';
+import { Indicator, NodeId, NodeTree, Node } from '../interfaces';
+import { defineEventListener, CraftDOMEvent } from '../utils/Handlers';
 
 type DraggedElement = NodeId[] | NodeTree;
 
@@ -18,6 +18,7 @@ export class DefaultEventHandlers extends CoreEventHandlers {
   static indicator: Indicator = null;
 
   options: DefaultEventHandlersOptions;
+  currentSelectedElementIds = [];
 
   constructor(store, options?: DefaultEventHandlersOptions) {
     super(store);
@@ -38,15 +39,15 @@ export class DefaultEventHandlers extends CoreEventHandlers {
               e.craft.stopPropagation();
 
               const { query } = this.store;
-              const selectedElementIds = query.getEvent('selected');
+              const selectedElementIds = query.getEvent('selected').all();
               const isMultiSelect = this.options.isMultiSelectEnabled(e);
 
               let newSelectedElementIds = [];
 
               /**
                * Retain the previously select elements if the multi-select condition is enabled
+               * or if the currentNode is already selected
                *
-               * Or if the currentNode is already selected
                * so users can just click to drag the selected elements around without holding the multi-select key
                */
 
@@ -72,10 +73,7 @@ export class DefaultEventHandlers extends CoreEventHandlers {
                 );
               }
 
-              // If the current Node is selected and is in multiselect, then deselect the Node
-              if (!(selectedElementIds.includes(id) && isMultiSelect)) {
-                newSelectedElementIds.push(id);
-              }
+              newSelectedElementIds.push(id);
 
               this.store.actions.setNodeEvent(
                 'selected',
@@ -86,11 +84,34 @@ export class DefaultEventHandlers extends CoreEventHandlers {
           defineEventListener('click', (e: CraftDOMEvent<MouseEvent>, id) => {
             e.craft.stopPropagation();
 
-            if (this.options.isMultiSelectEnabled(e)) {
-              return;
+            const { query } = this.store;
+            const selectedElementIds = query.getEvent('selected').all();
+
+            const isMultiSelect = this.options.isMultiSelectEnabled(e);
+            const isNodePreviouslySelected = this.currentSelectedElementIds.includes(
+              id
+            );
+
+            let newSelectedElementIds = [...selectedElementIds];
+
+            if (isMultiSelect && isNodePreviouslySelected) {
+              newSelectedElementIds.splice(
+                newSelectedElementIds.indexOf(id),
+                1
+              );
+              this.store.actions.setNodeEvent(
+                'selected',
+                newSelectedElementIds
+              );
+            } else if (!isMultiSelect && selectedElementIds.length > 1) {
+              newSelectedElementIds = [id];
+              this.store.actions.setNodeEvent(
+                'selected',
+                newSelectedElementIds
+              );
             }
 
-            this.store.actions.setNodeEvent('selected', [id]);
+            this.currentSelectedElementIds = newSelectedElementIds;
           }),
         ],
       },
@@ -118,14 +139,18 @@ export class DefaultEventHandlers extends CoreEventHandlers {
               e.craft.stopPropagation();
               e.preventDefault();
 
-              const draggedElement = DefaultEventHandlers.draggedElement as NodeTree;
+              const draggedElement = DefaultEventHandlers.draggedElement;
               if (!draggedElement) {
                 return;
               }
 
-              const node = draggedElement.rootNodeId
-                ? draggedElement.nodes[draggedElement.rootNodeId]
-                : draggedElement;
+              let node = (draggedElement as unknown) as Node;
+
+              if ((draggedElement as NodeTree).rootNodeId) {
+                const nodeTree = draggedElement as NodeTree;
+                node = nodeTree.nodes[nodeTree.rootNodeId];
+              }
+
               const { clientX: x, clientY: y } = e;
               const indicator = this.store.query.getDropPlaceholder(
                 node,
@@ -159,7 +184,7 @@ export class DefaultEventHandlers extends CoreEventHandlers {
               e.craft.stopPropagation();
 
               const { query, actions } = this.store;
-              const selectedElementIds = query.getEvent('selected');
+              const selectedElementIds = query.getEvent('selected').all();
 
               actions.setNodeEvent('dragged', selectedElementIds);
 

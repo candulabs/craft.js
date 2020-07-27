@@ -1,4 +1,4 @@
-import { ConnectorsForHandlers, Handlers } from '@candulabs/craft-utils';
+import { ConnectorsForHandlers, Handlers } from '../utils/Handlers';
 import { EditorStore } from '../editor/store';
 
 /**

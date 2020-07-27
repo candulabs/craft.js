@@ -1,4 +1,5 @@
-import { wrapHookToRecognizeElement, Connector } from './wrapConnectorHooks';
+import { wrapHookToRecognizeElement, Connector } from '@candulabs/craft-utils';
+import { EditorStore } from '../editor/store';
 
 export type CraftDOMEvent<T extends Event> = T & {
   craft: {
@@ -73,13 +74,10 @@ class WatchHandler {
     this.opts = opts;
     this.handler = handler;
 
-    const currentHandler = store.query.getState().handlers;
-
     this.unsubscribe = store.subscribe(
-      (state) => ({ enabled: state.options.enabled, handler: state.handlers }),
-      ({ enabled, handler }) => {
-        // Cleanup if the DOM element was removed or if the Handler is swapped for another
-        if (!document.body.contains(el) || handler !== currentHandler) {
+      (state) => ({ enabled: state.options.enabled }),
+      ({ enabled }) => {
+        if (!document.body.contains(el)) {
           this.remove();
           return this.unsubscribe();
         }
@@ -148,9 +146,9 @@ class WatchHandler {
  */
 export abstract class Handlers<T extends string = null> {
   // Stores a map of DOM elements to their attached connector's WatchHandler
-  private static wm = new WeakMap<HTMLElement, Record<string, WatchHandler>>();
+  private wm = new WeakMap<HTMLElement, Record<string, WatchHandler>>();
   // Data store to infer the enabled state from
-  protected store;
+  protected store: EditorStore;
 
   constructor(store) {
     this.store = store;
@@ -175,16 +173,17 @@ export abstract class Handlers<T extends string = null> {
 
       const connector = (el, opts) => {
         if (!el || !document.body.contains(el)) {
-          Handlers.wm.delete(el);
+          this.wm.delete(el);
           return;
         }
 
-        const domHandler = Handlers.wm.get(el);
+        const domHandler = this.wm.get(el);
+
         if (domHandler && domHandler[key]) {
           return;
         }
 
-        Handlers.wm.set(el, {
+        this.wm.set(el, {
           ...domHandler,
           [key]: new WatchHandler(this.store, el, opts, {
             init,

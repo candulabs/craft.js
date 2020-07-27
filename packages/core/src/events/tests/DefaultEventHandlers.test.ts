@@ -59,7 +59,9 @@ describe('EventHandlers', () => {
       })),
       getEvent: (type) =>
         ({
-          selected,
+          selected: {
+            all: () => selected,
+          },
         }[type]),
     };
     store = { actions, query };

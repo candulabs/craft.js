@@ -1,4 +1,5 @@
 import React from 'react';
+import isEqualWith from 'lodash.isequalwith';
 import {
   EditorState,
   Indicator,
@@ -30,6 +31,7 @@ import { mergeTrees } from '../utils/mergeTrees';
 import { resolveComponent } from '../utils/resolveComponent';
 import { deserializeNode } from '../utils/deserializeNode';
 import { NodeHelpers } from './NodeHelpers';
+import { EventHelpers } from './EventHelpers';
 import { getNodesFromSelector } from '../utils/getNodesFromSelector';
 
 export function QueryMethods(state: EditorState) {
@@ -139,7 +141,34 @@ export function QueryMethods(state: EditorState) {
     },
 
     getEvent(eventType: NodeEventTypes) {
-      return Array.from(state.events[eventType]);
+      return EventHelpers(state, eventType);
+    },
+
+    // Get common properties across the specified list of Nodes
+    getCommonProperties(
+      nodes: NodeSelector,
+      valueToCheck: (node: Node) => any
+    ) {
+      const targets = getNodesFromSelector(state.nodes, nodes);
+
+      let value = null;
+      for (let i = 0; i < targets.length; i++) {
+        const { node } = targets[i];
+        const currentValue = valueToCheck(node);
+        if (i === 0) {
+          value = currentValue;
+          continue;
+        }
+
+        if (!isEqualWith(value, currentValue)) {
+          value = null;
+          break;
+        }
+
+        value = currentValue;
+      }
+
+      return value;
     },
 
     /**
