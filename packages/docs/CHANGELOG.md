@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# 0.8.0 (2020-07-27)
+
+
+### Features
+
+* improve multiselect ([#36](https://github.com/candulabs/craft.js/issues/36)) ([863e7bc](https://github.com/candulabs/craft.js/commit/863e7bc62b92b153599061846e75452b25fea2a7))
+
+
+
+
+
 ## 0.7.1 (2020-07-17)
 
 **Note:** Version bump only for package docs
