@@ -11,6 +11,7 @@ import {
 import { createNode } from '../../utils/createNode';
 import { parseNodeFromJSX } from '../../utils/parseNodeFromJSX';
 import { deserializeNode } from '../../utils/deserializeNode';
+import { createTestNode } from '../../utils/createTestNode';
 
 jest.mock('../../utils/resolveComponent', () => ({
   resolveComponent: () => null,
@@ -25,13 +26,28 @@ jest.mock('../../utils/deserializeNode', () => ({
   deserializeNode: () => null,
 }));
 
+let nodes = {
+  a: createTestNode('a', {
+    props: {
+      color: '#fff',
+      bg: '#000',
+    },
+  }),
+  b: createTestNode('b', {
+    props: {
+      color: '#fff',
+      bg: '#fff',
+    },
+  }),
+};
+
 describe('query', () => {
   const resolver = { H1: () => null };
   let query;
   let state;
 
   beforeEach(() => {
-    state = { options: { resolver } };
+    state = { nodes, options: { resolver } };
     query = QueryMethods(state);
   });
 
@@ -181,6 +197,24 @@ describe('query', () => {
             nodes: documentWithCardState.nodes,
           });
         });
+      });
+    });
+  });
+
+  describe('getCommonProperties', () => {
+    describe('when property is common across nodes', () => {
+      it('should return common property', () => {
+        expect(
+          query.getCommonProperties(['a', 'b'], (node) => node.data.props.color)
+        ).toBe('#fff');
+      });
+    });
+
+    describe('when property is different across nodes', () => {
+      it('should return null', () => {
+        expect(
+          query.getCommonProperties(['a', 'b'], (node) => node.data.props.bg)
+        ).toBe(null);
       });
     });
   });
