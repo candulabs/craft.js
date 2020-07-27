@@ -1,7 +1,7 @@
-import { defineEventListener, CraftDOMEvent } from '@candulabs/craft-utils';
 import { createShadow } from './createShadow';
-import { Indicator, NodeId, NodeTree } from '../interfaces';
 import { CoreEventHandlers } from './CoreEventHandlers';
+import { Indicator, NodeId, NodeTree, Node } from '../interfaces';
+import { defineEventListener, CraftDOMEvent } from '../utils/Handlers';
 
 type DraggedElement = NodeId[] | NodeTree;
 
