@@ -26,7 +26,7 @@ import { updateEventsNode } from '../utils/updateEventsNode';
 import invariant from 'tiny-invariant';
 import { getNodesFromSelector } from '../utils/getNodesFromSelector';
 
-export const Actions = (
+export const ActionMethods = (
   state: EditorState,
   query: QueryCallbacksFor<typeof QueryMethods>
 ) => {
@@ -298,10 +298,15 @@ export const Actions = (
      * @param cb
      */
     setCustom<T extends NodeId>(
-      id: T,
+      selector: NodeSelector<NodeSelectorType.Id>,
       cb: (data: EditorState['nodes'][T]['data']['custom']) => void
     ) {
-      cb(state.nodes[id].data.custom);
+      const targets = getNodesFromSelector(state.nodes, selector, {
+        idOnly: true,
+        existOnly: true,
+      });
+
+      targets.forEach(({ node }) => cb(state.nodes[node.id].data.custom));
     },
 
     /**
@@ -340,9 +345,16 @@ export const Actions = (
      * @param id
      * @param cb
      */
-    setProp(id: NodeId, cb: (props: any) => void) {
-      invariant(state.nodes[id], ERROR_INVALID_NODEID);
-      cb(state.nodes[id].data.props);
+    setProp(
+      selector: NodeSelector<NodeSelectorType.Id>,
+      cb: (props: any) => void
+    ) {
+      const targets = getNodesFromSelector(state.nodes, selector, {
+        idOnly: true,
+        existOnly: true,
+      });
+
+      targets.forEach(({ node }) => cb(state.nodes[node.id].data.props));
     },
 
     setState(cb) {

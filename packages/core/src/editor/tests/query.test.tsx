@@ -205,16 +205,32 @@ describe('query', () => {
     describe('when property is common across nodes', () => {
       it('should return common property', () => {
         expect(
-          query.getCommonProperties(['a', 'b'], (node) => node.data.props.color)
-        ).toBe('#fff');
+          query.getCommonProperties(['a', 'b'], (node) => ({
+            color: node.data.props.color,
+          }))
+        ).toMatchObject({ color: '#fff' });
       });
     });
 
     describe('when property is different across nodes', () => {
       it('should return null', () => {
         expect(
-          query.getCommonProperties(['a', 'b'], (node) => node.data.props.bg)
-        ).toBe(null);
+          query.getCommonProperties(['a', 'b'], (node) => ({
+            bg: node.data.props.bg,
+          }))
+        ).toMatchObject({ bg: null });
+      });
+    });
+
+    describe('deep comparison', () => {
+      it('should return null', () => {
+        expect(
+          query.getCommonProperties(['a', 'b'], (node) => ({
+            props: { color: node.data.props.color, bg: node.data.props.bg },
+          }))
+        ).toMatchObject({
+          props: { color: '#fff', bg: null },
+        });
       });
     });
   });

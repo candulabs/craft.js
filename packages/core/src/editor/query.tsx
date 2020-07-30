@@ -30,6 +30,7 @@ import { fromEntries } from '../utils/fromEntries';
 import { mergeTrees } from '../utils/mergeTrees';
 import { resolveComponent } from '../utils/resolveComponent';
 import { deserializeNode } from '../utils/deserializeNode';
+import { isObject } from '../utils/isObject';
 import { NodeHelpers } from './NodeHelpers';
 import { EventHelpers } from './EventHelpers';
 import { getNodesFromSelector } from '../utils/getNodesFromSelector';
@@ -148,27 +149,55 @@ export function QueryMethods(state: EditorState) {
     getCommonProperties(
       nodes: NodeSelector,
       valueToCheck: (node: Node) => any
-    ) {
+    ): any {
       const targets = getNodesFromSelector(state.nodes, nodes);
 
-      let value = null;
-      for (let i = 0; i < targets.length; i++) {
-        const { node } = targets[i];
+      let output = {},
+        lhs = {};
+
+      const diffKeys = new WeakMap();
+
+      const comparator = (output, lhs, rhs) => {
+        const keys = [...Object.keys(lhs), ...Object.keys(rhs)];
+
+        keys.forEach((key) => {
+          // Ignore if the key has already been checked to be different
+          if (diffKeys.get(lhs) && diffKeys.get(lhs)[key]) {
+            console.log('exist');
+            return;
+          }
+
+          // If the value is an object, iterate and diff its properties
+          if (isObject(lhs[key]) && isObject(rhs[key])) {
+            output[key] = { ...lhs[key] };
+            comparator(output[key], lhs[key], rhs[key]);
+            return;
+          }
+
+          // If the values are different, set the final value for the key to null
+          if (!isEqualWith(lhs[key], rhs[key])) {
+            // blacklist key so we dont have to check for it again
+            diffKeys.set(lhs, key);
+            output[key] = null;
+            return;
+          }
+        });
+      };
+
+      targets.forEach(({ node }, i) => {
         const currentValue = valueToCheck(node);
+
         if (i === 0) {
-          value = currentValue;
-          continue;
+          lhs = currentValue;
+          output = { ...lhs };
+          return;
         }
 
-        if (!isEqualWith(value, currentValue)) {
-          value = null;
-          break;
-        }
+        comparator(output, lhs, currentValue);
+        lhs = output;
+      });
 
-        value = currentValue;
-      }
-
-      return value;
+      return output;
     },
 
     /**
