@@ -22,7 +22,7 @@ import {
 } from '@candulabs/craft-utils';
 import { QueryMethods } from './query';
 import { fromEntries } from '../utils/fromEntries';
-import { updateEventsNode } from '../utils/updateEventsNode';
+import { removeNodeFromEvents } from '../utils/removeNodeFromEvents';
 import invariant from 'tiny-invariant';
 import { getNodesFromSelector } from '../utils/getNodesFromSelector';
 
@@ -172,7 +172,7 @@ export const Actions = (
       const parentChildren = state.nodes[targetNode.data.parent].data.nodes;
       parentChildren.splice(parentChildren.indexOf(id), 1);
 
-      updateEventsNode(state, id, true);
+      removeNodeFromEvents(state, id);
       delete state.nodes[id];
     },
 
@@ -266,20 +266,22 @@ export const Actions = (
 
     setNodeEvent(
       eventType: NodeEventTypes,
-      selector: NodeSelector<NodeSelectorType.Id>
+      nodeIdSelector: NodeSelector<NodeSelectorType.Id>
     ) {
       const current = state.events[eventType];
       if (current.size > 0) {
-        current.forEach((id) => (state.nodes[id].events[eventType] = false));
+        current.forEach((id) => {
+          state.nodes[id].events[eventType] = false;
+        });
       }
 
       state.events[eventType] = new Set();
 
-      if (!selector) {
+      if (!nodeIdSelector) {
         return;
       }
 
-      const targets = getNodesFromSelector(state.nodes, selector, {
+      const targets = getNodesFromSelector(state.nodes, nodeIdSelector, {
         idOnly: true,
         existOnly: true,
       });
@@ -287,7 +289,9 @@ export const Actions = (
       const nodeIds: Set<NodeId> = new Set(targets.map(({ node }) => node.id));
 
       if (nodeIds) {
-        nodeIds.forEach((id) => (state.nodes[id].events[eventType] = true));
+        nodeIds.forEach((id) => {
+          state.nodes[id].events[eventType] = true;
+        });
         state.events[eventType] = nodeIds;
       }
     },
