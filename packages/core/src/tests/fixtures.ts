@@ -1,8 +1,11 @@
 /**
  * Nodes
  */
+import cloneDeep from 'lodash/cloneDeep';
+import { Nodes } from '../interfaces';
 import { createTestNode } from '../utils/createTestNode';
 import { editorInitialState } from '../editor/store';
+import { createNode } from '../utils/createNode';
 
 export const rootNode = createTestNode('ROOT', {
   name: 'Document',
@@ -190,4 +193,93 @@ export const documentWithVariousNodes = {
       parent: 'linked-node',
     }),
   },
+};
+
+export const createTestNodes = (rootNode): Nodes => {
+  const nodes = {};
+  const iterateNodes = (parentNode) => {
+    parentNode = createNode(cloneDeep(parentNode));
+
+    nodes[parentNode.id] = parentNode;
+
+    const { nodes: childNodes, linkedNodes } = parentNode.data || {};
+    if (childNodes) {
+      childNodes.forEach((childNode, i) => {
+        const {
+          data: {
+            nodes: childNodesObj,
+            linkedNodes: linkedNodesObj,
+            ...nodeData
+          },
+          ...node
+        } = childNode;
+        const validChildNode = createNode({
+          ...node,
+          data: {
+            ...nodeData,
+          },
+        });
+        validChildNode.data.parent = parentNode.id;
+        nodes[validChildNode.id] = validChildNode;
+        parentNode.data.nodes[i] = validChildNode.id;
+        iterateNodes({
+          ...validChildNode,
+          data: {
+            ...validChildNode.data,
+            nodes: childNodesObj || [],
+            linkedNodes: linkedNodesObj || {},
+          },
+        });
+      });
+    }
+
+    if (linkedNodes) {
+      Object.keys(linkedNodes).forEach((linkedId) => {
+        const {
+          data: {
+            nodes: childNodesObj,
+            linkedNodes: linkedNodesObj,
+            ...nodeData
+          },
+          ...node
+        } = linkedNodes[linkedId];
+        const validLinkedNode = createNode({
+          ...node,
+          data: {
+            ...nodeData,
+          },
+        });
+        parentNode.data.linkedNodes[linkedId] = validLinkedNode.id;
+
+        validLinkedNode.data.parent = parentNode.id;
+        nodes[validLinkedNode.id] = validLinkedNode;
+        iterateNodes({
+          ...validLinkedNode,
+          data: {
+            ...validLinkedNode.data,
+            nodes: childNodesObj || [],
+            linkedNodes: linkedNodesObj || {},
+          },
+        });
+      });
+    }
+  };
+
+  iterateNodes(rootNode);
+
+  return nodes;
+};
+
+export const createTestState = (state = {} as any) => {
+  const { nodes: rootNode, events } = state;
+
+  return {
+    ...editorInitialState,
+    ...state,
+    nodes: rootNode ? createTestNodes(rootNode) : {},
+    events: {
+      ...editorInitialState.events,
+      ...(events || {}),
+    },
+  };
 };

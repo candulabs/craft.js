@@ -4,28 +4,84 @@ import * as actions from '../actions';
 import { produce } from 'immer';
 import { QueryMethods } from '../../editor/query';
 import {
-  card,
-  documentState,
-  documentWithButtonsState,
-  documentWithCardState,
-  documentWithLeafState,
   emptyState,
-  leafNode,
-  primaryButton,
-  rootNode,
-  secondaryButton,
+  createTestState,
+  createTestNodes,
 } from '../../tests/fixtures';
 import { EditorState } from '@candulabs/craft-core';
+import { createNode } from '../../utils/createNode';
 
 const Actions = (state) => (cb) =>
   produce<EditorState>(state, (draft) =>
-    cb(actions.Actions(draft as any, QueryMethods(state)))
+    cb(actions.Actions(draft as any, QueryMethods(state) as any))
   );
 
+const rootNode = createNode({
+  id: 'ROOT',
+  data: {
+    type: 'div',
+  },
+});
+
+const leafNode = createNode({
+  id: 'node-leaf',
+  data: {
+    type: 'span',
+  },
+});
+
+const primaryButton = createNode({
+  id: 'primary-button',
+  data: {
+    type: 'button',
+  },
+});
+
+const secondaryButton = createNode({
+  id: 'secondary-button',
+  data: {
+    type: 'button',
+  },
+});
+
+const rootTestNode = (config: any = {}) => {
+  return {
+    id: rootNode.id,
+    ...config,
+    data: {
+      type: 'div',
+      ...(config.data || {}),
+    },
+  };
+};
+
+const expectEditorState = (lhs, rhs) => {
+  const { nodes: nodesRhs, ...restRhs } = rhs;
+  const { nodes: nodesLhs, ...restLhs } = lhs;
+  expect(restLhs).toEqual(restRhs);
+
+  const nodesRhsSimplified = Object.keys(nodesRhs).reduce((accum, id) => {
+    const { _hydrationTimestamp, rules, ...node } = nodesRhs[id];
+    accum[id] = node;
+    return accum;
+  }, {});
+
+  const nodesLhsSimplified = Object.keys(nodesLhs).reduce((accum, id) => {
+    const { _hydrationTimestamp, rules, ...node } = nodesLhs[id];
+    accum[id] = node;
+    return accum;
+  }, {});
+
+  expect(nodesLhsSimplified).toEqual(nodesRhsSimplified);
+};
+
 describe('actions.add', () => {
+  let state = createTestState({
+    nodes: rootTestNode(),
+  });
   it('should throw if we give a parentId that doesnt exist', () => {
     expect(() =>
-      Actions(emptyState)((actions) => actions.add(leafNode))
+      Actions(createTestState())((actions) => actions.add(leafNode))
     ).toThrow();
   });
   it('should throw if we create a node that doesnt have a parent and we dont provide a parent ', () => {
@@ -34,147 +90,312 @@ describe('actions.add', () => {
     ).toThrow();
   });
   it('should be able to add leaf to the document', () => {
-    const newState = Actions(documentState)((actions) =>
+    const newState = Actions(state)((actions) =>
       actions.add(leafNode, rootNode.id)
     );
 
-    expect(newState).toEqual(documentWithLeafState);
+    expectEditorState(
+      newState,
+      createTestState({
+        nodes: rootTestNode({
+          data: {
+            type: 'div',
+            nodes: [leafNode],
+          },
+        }),
+      })
+    );
   });
   it('should be able to add two nodes', () => {
-    const newState = Actions(documentState)((actions) =>
+    const newState = Actions(state)((actions) =>
       actions.add([primaryButton, secondaryButton], rootNode.id)
     );
 
-    expect(newState).toEqual(documentWithButtonsState);
-  });
-});
-
-describe('actions.addNodeAtIndex', () => {
-  it('should throw if we give a parentId that doesnt exist', () => {
-    expect(() =>
-      Actions(emptyState)((actions) => actions.addNodeAtIndex(leafNode))
-    ).toThrow();
-  });
-  it('should throw if we give an invalid index', () => {
-    const state = Actions(documentState);
-    expect(() =>
-      state((actions) => actions.addNodeAtIndex(leafNode, rootNode.id, -1))
-    ).toThrow();
-    expect(() =>
-      state((actions) => actions.addNodeAtIndex(leafNode, rootNode.id, 1))
-    ).toThrow();
-  });
-  it('should be able to add the node at 0', () => {
-    const newState = Actions(documentState)((actions) =>
-      actions.add(leafNode, rootNode.id, 0)
+    expectEditorState(
+      newState,
+      createTestState({
+        nodes: rootTestNode({
+          data: {
+            type: 'div',
+            nodes: [primaryButton, secondaryButton],
+          },
+        }),
+      })
     );
-    expect(newState).toEqual(documentWithLeafState);
   });
 });
 
 describe('actions.addNodeTree', () => {
-  it('should throw if we give a parentId that doesnt exist', () => {
-    expect(() =>
-      Actions(emptyState)((actions) => actions.addTreeAtIndex(leafNode))
-    ).toThrow();
+  let state;
+
+  beforeEach(() => {
+    state = createTestState({
+      nodes: rootTestNode({
+        data: {
+          type: 'div',
+        },
+      }),
+    });
   });
-  it('should throw if we give an invalid index', () => {
-    const state = Actions(documentState);
-    expect(() =>
-      state((actions) => actions.addNodeTree(leafNode, rootNode.id, -1))
-    ).toThrow();
-    expect(() =>
-      state((actions) => actions.addNodeTree(leafNode, rootNode.id, 1))
-    ).toThrow();
-  });
+
   it('should be able to add a single node at 0', () => {
-    const tree = {
-      rootNodeId: leafNode.id,
-      nodes: { [leafNode.id]: leafNode },
-    };
-    const newState = Actions(documentState)((actions) =>
-      actions.addNodeTree(tree, rootNode.id, 0)
+    const newState = Actions(state)((actions) =>
+      actions.addNodeTree(
+        {
+          rootNodeId: leafNode.id,
+          nodes: { [leafNode.id]: leafNode },
+        },
+        rootNode.id
+      )
     );
-    expect(newState).toEqual(documentWithLeafState);
+    expectEditorState(
+      newState,
+      createTestState({
+        nodes: rootTestNode({
+          data: {
+            type: 'div',
+            nodes: [leafNode],
+          },
+        }),
+      })
+    );
   });
   it('should be able to add a larger tree', () => {
-    const tree = {
-      rootNodeId: card.id,
-      nodes: cloneDeep(documentWithCardState.nodes),
+    const card = {
+      id: 'card',
+      data: {
+        type: 'section',
+        nodes: [
+          {
+            id: 'card-child',
+            data: {
+              type: 'h1',
+            },
+          },
+        ],
+      },
     };
-    const newState = Actions(documentState)((actions) =>
-      actions.addNodeTree(tree, rootNode.id, 0)
+
+    const newState = Actions(state)((actions) =>
+      actions.addNodeTree(
+        {
+          rootNodeId: 'card',
+          nodes: createTestNodes(card),
+        },
+        rootNode.id
+      )
     );
-    expect(newState).toEqual(documentWithCardState);
+
+    expectEditorState(
+      newState,
+      createTestState({
+        nodes: rootTestNode({
+          data: {
+            type: 'div',
+            nodes: [card],
+          },
+        }),
+      })
+    );
   });
 });
 
 describe('actions.delete', () => {
-  it('should throw if you try to a non existing node', () => {
-    expect(() => Actions(emptyState)((actions) => actions.delete(leafNode.id)));
-  });
-  it('should throw if you try to delete the root', () => {
-    expect(() => Actions(documentState)((actions) => actions.add(rootNode.id)));
-  });
-  it('should be able to delete leaf from the document', () => {
-    const newState = Actions(documentWithLeafState)((actions) =>
-      actions.delete(leafNode.id)
-    );
+  let state;
 
-    expect(newState).toEqual(documentState);
+  beforeEach(() => {
+    state = createTestState({
+      nodes: rootTestNode(),
+    });
   });
-  it('should be able to delete a card', () => {
-    const newState = Actions(documentWithCardState)((actions) =>
-      actions.delete(card.id)
-    );
 
-    expect(newState).toEqual(documentState);
+  // it('should throw if you try to a non existing node', () => {
+  //   expect(() => Actions(emptyState)((actions) => actions.delete(leafNode.id))).toThrow();
+  // });
+  // it('should throw if you try to delete the root', () => {
+  //   expect(() => Actions(documentState)((actions) => actions.add(rootNode.id))).toThrow();
+  // });
+  it('should be able to delete node', () => {
+    const state = createTestState({
+      nodes: rootTestNode({
+        data: {
+          type: 'div',
+          nodes: [leafNode],
+        },
+      }),
+    });
+
+    const newState = Actions(state)((actions) => actions.delete(leafNode.id));
+
+    expectEditorState(
+      newState,
+      createTestState({
+        nodes: rootTestNode(),
+      })
+    );
+  });
+  it('should be able to delete nodes with children', () => {
+    const card = {
+      id: 'card',
+      data: {
+        type: 'div',
+        nodes: [
+          {
+            id: 'card-child',
+            data: {
+              type: 'h1',
+            },
+          },
+        ],
+      },
+    };
+
+    const state = createTestState({
+      nodes: rootTestNode({
+        data: {
+          type: 'div',
+          nodes: [card],
+        },
+      }),
+    });
+
+    const newState = Actions(state)((actions) => actions.delete(card.id));
+
+    expectEditorState(
+      newState,
+      createTestState({
+        nodes: rootTestNode(),
+      })
+    );
   });
 });
 
 describe('actions.clearEvents', () => {
-  const newEvents = { ...emptyState.events };
   it('should be able to reset the events', () => {
-    const newState = Actions(emptyState)((actions) => actions.clearEvents());
+    const state = createTestState({
+      nodes: {
+        id: 'node-a',
+        data: {
+          type: 'div',
+          nodes: [
+            {
+              id: 'node-b',
+              data: {
+                type: 'span',
+              },
+            },
+          ],
+        },
+      },
+      events: {
+        selected: new Set(['node-a']),
+        hovered: new Set(['node-b']),
+      },
+    });
 
-    expect(newState).toEqual({ ...emptyState, events: newEvents });
+    const newState = Actions(state)((actions) => actions.clearEvents());
+
+    expect(newState.events).toEqual(emptyState.events);
   });
 });
 
 describe('actions.replaceNodes', () => {
   it('should be able to replace the nodes', () => {
-    const newState = Actions(emptyState)((actions) =>
-      actions.replaceNodes(documentState.nodes)
+    const newNodes = {
+      id: 'Test',
+      data: {
+        type: 'div',
+        nodes: [
+          {
+            id: 'node-btn',
+            data: {
+              type: 'button',
+            },
+          },
+        ],
+      },
+    };
+
+    const newState = Actions(createTestState())((actions) =>
+      actions.replaceNodes(createTestNodes(newNodes))
     );
 
-    expect(newState).toEqual(documentState);
+    expectEditorState(newState, createTestState({ nodes: newNodes }));
   });
 });
 
 describe('actions.reset', () => {
   it('should reset the entire state', () => {
-    const newState = Actions(documentState)((actions) => actions.reset());
+    const state = createTestState({
+      nodes: {
+        id: 'node',
+        data: {
+          type: 'div',
+          linkedNodes: {
+            header: {
+              id: 'node-header',
+              data: {
+                type: 'section',
+              },
+            },
+          },
+        },
+      },
+      events: {
+        selected: new Set(['node-header']),
+      },
+    });
 
-    expect(newState).toEqual(emptyState);
+    const newState = Actions(state)((actions) => actions.reset());
+
+    expectEditorState(newState, createTestState());
   });
 });
 
 describe('actions.deserialize', () => {
-  const serialized = mapValues(documentState.nodes, ({ data }) => ({
-    ...data,
-  }));
-
   it('should be able to set the state correctly', () => {
-    const newState = Actions(emptyState)((actions) =>
+    const nodes = {
+      id: 'node-root',
+      data: {
+        type: 'h1',
+        nodes: [
+          {
+            id: 'btn',
+            data: {
+              type: 'button',
+            },
+          },
+          {
+            id: 'container',
+            data: {
+              type: 'div',
+              linkedNodes: {
+                header: {
+                  id: 'header',
+                  data: {
+                    type: 'div',
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+    };
+
+    const serialized = mapValues(createTestNodes(nodes), ({ data }) => ({
+      ...data,
+    }));
+
+    const newState = Actions(createTestState())((actions) =>
       actions.deserialize(serialized)
     );
 
-    const node = {
-      ...rootNode,
-      rules: expect.anything(),
-      _hydrationTimestamp: expect.anything(),
-    };
-
-    expect(newState.nodes['ROOT']).toEqual(node);
+    expectEditorState(
+      newState,
+      createTestState({
+        nodes,
+      })
+    );
   });
 });
