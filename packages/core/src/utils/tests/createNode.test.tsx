@@ -1,4 +1,3 @@
-import React from 'react';
 import { createNode } from '../createNode';
 import { createTestNode } from '../createTestNode';
 

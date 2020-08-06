@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { HISTORY_ACTIONS } from '@candulabs/craft-utils';
 
 import { Options } from '../interfaces';
-import { DefaultEventHandlers, Events } from '../events';
+import { Events } from '../events';
 
 import { useEditorStore } from './store';
 import { EditorContext } from './EditorContext';

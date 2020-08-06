@@ -1,4 +1,3 @@
-import cloneDeep from 'lodash/cloneDeep';
 import mapValues from 'lodash/mapValues';
 import * as actions from '../actions';
 import { produce } from 'immer';
@@ -16,143 +15,131 @@ const Actions = (state) => (cb) =>
     cb(actions.Actions(draft as any, QueryMethods(state) as any))
   );
 
-const rootNode = createNode({
-  id: 'ROOT',
-  data: {
-    type: 'div',
-  },
-});
-
-const leafNode = createNode({
-  id: 'node-leaf',
-  data: {
-    type: 'span',
-  },
-});
-
-const primaryButton = createNode({
-  id: 'primary-button',
-  data: {
-    type: 'button',
-  },
-});
-
-const secondaryButton = createNode({
-  id: 'secondary-button',
-  data: {
-    type: 'button',
-  },
-});
-
-const rootTestNode = (config: any = {}) => {
-  return {
-    id: rootNode.id,
-    ...config,
-    data: {
-      type: 'div',
-      ...(config.data || {}),
-    },
-  };
-};
-
 describe('actions.add', () => {
-  let state = createTestState({
-    nodes: rootTestNode(),
+  let state, rootNode;
+  beforeEach(() => {
+    rootNode = {
+      id: 'node-root',
+      data: {
+        type: 'div',
+      },
+    };
+
+    state = createTestState({
+      nodes: rootNode,
+    });
   });
   it('should throw if we give a parentId that doesnt exist', () => {
     expect(() =>
-      Actions(createTestState())((actions) => actions.add(leafNode))
+      Actions(createTestState())((actions) =>
+        actions.add(
+          createNode({
+            id: 'node-test',
+            data: {
+              type: 'span',
+            },
+          })
+        )
+      )
     ).toThrow();
   });
   it('should throw if we create a node that doesnt have a parent and we dont provide a parent ', () => {
     expect(() =>
-      Actions(emptyState)((actions) => actions.add(rootNode, rootNode.id))
+      Actions(createTestState())((actions) =>
+        actions.add(rootNode, rootNode.id)
+      )
     ).toThrow();
   });
   it('should be able to add leaf to the document', () => {
+    const node = createNode({
+      id: 'node-btn',
+      data: {
+        type: 'button',
+      },
+    });
+
     const newState = Actions(state)((actions) =>
-      actions.add(leafNode, rootNode.id)
+      actions.add(node, rootNode.id)
     );
+
+    rootNode.data.nodes = [node];
 
     expectEditorState(
       newState,
       createTestState({
-        nodes: rootTestNode({
-          data: {
-            type: 'div',
-            nodes: [leafNode],
-          },
-        }),
+        nodes: rootNode,
       })
     );
   });
   it('should be able to add two nodes', () => {
+    const primaryButton = createNode({
+      id: 'primary-button',
+      data: {
+        type: 'button',
+      },
+    });
+
+    const secondaryButton = createNode({
+      id: 'secondary-button',
+      data: {
+        type: 'button',
+      },
+    });
+
     const newState = Actions(state)((actions) =>
       actions.add([primaryButton, secondaryButton], rootNode.id)
     );
 
+    rootNode.data.nodes = [primaryButton, secondaryButton];
+
     expectEditorState(
       newState,
       createTestState({
-        nodes: rootTestNode({
-          data: {
-            type: 'div',
-            nodes: [primaryButton, secondaryButton],
-          },
-        }),
-      })
-    );
-  });
-  it('should be able to add the node at 0', () => {
-    const newState = Actions(state)((actions) =>
-      actions.add(leafNode, rootNode.id, 0)
-    );
-    expectEditorState(
-      newState,
-      createTestState({
-        nodes: rootTestNode({
-          data: {
-            type: 'div',
-            nodes: [leafNode],
-          },
-        }),
+        nodes: rootNode,
       })
     );
   });
 });
 
 describe('actions.addNodeTree', () => {
-  let state;
+  let state, rootNode;
 
   beforeEach(() => {
+    rootNode = {
+      id: 'node-root',
+      data: {
+        type: 'div',
+      },
+    };
+
     state = createTestState({
-      nodes: rootTestNode({
-        data: {
-          type: 'div',
-        },
-      }),
+      nodes: rootNode,
     });
   });
 
   it('should be able to add a single node at 0', () => {
+    const node = createNode({
+      data: {
+        type: 'button',
+      },
+    });
+
     const newState = Actions(state)((actions) =>
       actions.addNodeTree(
         {
-          rootNodeId: leafNode.id,
-          nodes: { [leafNode.id]: leafNode },
+          rootNodeId: node.id,
+          nodes: { [node.id]: node },
         },
         rootNode.id
       )
     );
+
+    rootNode.data.nodes = [node];
+
     expectEditorState(
       newState,
       createTestState({
-        nodes: rootTestNode({
-          data: {
-            type: 'div',
-            nodes: [leafNode],
-          },
-        }),
+        nodes: rootNode,
       })
     );
   });
@@ -182,51 +169,66 @@ describe('actions.addNodeTree', () => {
       )
     );
 
+    rootNode.data.nodes = [card];
+
     expectEditorState(
       newState,
       createTestState({
-        nodes: rootTestNode({
-          data: {
-            type: 'div',
-            nodes: [card],
-          },
-        }),
+        nodes: rootNode,
       })
     );
   });
 });
 
 describe('actions.delete', () => {
-  let state;
+  let state, rootNode;
 
   beforeEach(() => {
+    rootNode = {
+      id: 'node-root',
+      data: {
+        type: 'div',
+      },
+    };
+
     state = createTestState({
-      nodes: rootTestNode(),
+      nodes: rootNode,
     });
   });
 
-  // it('should throw if you try to a non existing node', () => {
-  //   expect(() => Actions(emptyState)((actions) => actions.delete(leafNode.id))).toThrow();
-  // });
-  // it('should throw if you try to delete the root', () => {
-  //   expect(() => Actions(documentState)((actions) => actions.add(rootNode.id))).toThrow();
-  // });
+  it('should throw if you try to a non existing node', () => {
+    expect(() =>
+      Actions(createTestState())((actions) => actions.delete(rootNode.id))
+    ).toThrow();
+  });
+  it('should throw if you try to delete the root', () => {
+    expect(() =>
+      Actions(state)((actions) => actions.add(rootNode.id))
+    ).toThrow();
+  });
   it('should be able to delete node', () => {
+    const node = {
+      id: 'node-test',
+      data: {
+        type: 'button',
+      },
+    };
     const state = createTestState({
-      nodes: rootTestNode({
+      nodes: {
+        ...rootNode,
         data: {
-          type: 'div',
-          nodes: [leafNode],
+          ...rootNode.data,
+          nodes: [node],
         },
-      }),
+      },
     });
 
-    const newState = Actions(state)((actions) => actions.delete(leafNode.id));
+    const newState = Actions(state)((actions) => actions.delete(node.id));
 
     expectEditorState(
       newState,
       createTestState({
-        nodes: rootTestNode(),
+        nodes: rootNode,
       })
     );
   });
@@ -247,12 +249,13 @@ describe('actions.delete', () => {
     };
 
     const state = createTestState({
-      nodes: rootTestNode({
+      nodes: {
+        ...rootNode,
         data: {
-          type: 'div',
+          ...rootNode.data,
           nodes: [card],
         },
-      }),
+      },
     });
 
     const newState = Actions(state)((actions) => actions.delete(card.id));
@@ -260,7 +263,7 @@ describe('actions.delete', () => {
     expectEditorState(
       newState,
       createTestState({
-        nodes: rootTestNode(),
+        nodes: rootNode,
       })
     );
   });
