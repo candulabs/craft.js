@@ -155,18 +155,10 @@ export function QueryMethods(state: EditorState) {
       let output = {},
         lhs = {};
 
-      const diffKeys = new WeakMap();
-
       const comparator = (output, lhs, rhs) => {
-        const keys = [...Object.keys(lhs), ...Object.keys(rhs)];
+        const keys = new Set([...Object.keys(lhs), ...Object.keys(rhs)]);
 
-        keys.forEach((key) => {
-          // Ignore if the key has already been checked to be different
-          if (diffKeys.get(lhs) && diffKeys.get(lhs)[key]) {
-            console.log('exist');
-            return;
-          }
-
+        Array.from(keys).forEach((key) => {
           // If the value is an object, iterate and diff its properties
           if (isObject(lhs[key]) && isObject(rhs[key])) {
             output[key] = { ...lhs[key] };
@@ -177,7 +169,6 @@ export function QueryMethods(state: EditorState) {
           // If the values are different, set the final value for the key to null
           if (!isEqualWith(lhs[key], rhs[key])) {
             // blacklist key so we dont have to check for it again
-            diffKeys.set(lhs, key);
             output[key] = null;
             return;
           }
