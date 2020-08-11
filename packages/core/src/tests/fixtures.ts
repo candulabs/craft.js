@@ -39,59 +39,8 @@ export const card = createTestNode('node-card', {
 /**
  * Editor states
  */
-export const emptyState = {
-  ...editorInitialState,
-  options: {
-    resolver: {
-      Document: 'Document',
-    },
-  },
-};
-
-export const documentState = {
-  ...emptyState,
-  nodes: {
-    [rootNode.id]: rootNode,
-  },
-};
-
-export const documentWithLeafState = {
-  ...emptyState,
-  nodes: {
-    [rootNode.id]: {
-      ...rootNode,
-      data: { ...rootNode.data, nodes: [leafNode.id] },
-    },
-    [leafNode.id]: {
-      ...leafNode,
-      data: { ...leafNode.data, parent: rootNode.id },
-    },
-  },
-};
-
-export const documentWithButtonsState = {
-  ...emptyState,
-  nodes: {
-    [rootNode.id]: {
-      ...rootNode,
-      data: {
-        ...rootNode.data,
-        nodes: [primaryButton.id, secondaryButton.id],
-      },
-    },
-    [primaryButton.id]: {
-      ...primaryButton,
-      data: { ...primaryButton.data, parent: rootNode.id },
-    },
-    [secondaryButton.id]: {
-      ...secondaryButton,
-      data: { ...secondaryButton.data, parent: rootNode.id },
-    },
-  },
-};
-
 export const documentWithCardState = {
-  ...emptyState,
+  ...editorInitialState,
   nodes: {
     [rootNode.id]: {
       ...rootNode,

@@ -5,7 +5,8 @@ import {
 } from '@candulabs/craft-utils';
 import { ActionMethods } from './actions';
 import { QueryMethods } from './query';
-import { EditorState, NodeEventTypes, NodeId } from '../interfaces';
+import { EditorState, NodeEventTypes, NodeId, Options } from '../interfaces';
+import { DefaultEventHandlers } from '../events';
 
 export const editorInitialState = {
   nodes: {},
@@ -16,6 +17,18 @@ export const editorInitialState = {
   },
   indicator: null,
   handlers: null,
+  options: {
+    onNodesChange: () => null,
+    onRender: ({ render }) => render,
+    resolver: {},
+    nodes: null,
+    enabled: true,
+    indicator: {
+      error: 'red',
+      success: 'rgb(98, 196, 98)',
+    },
+    handlers: (store) => new DefaultEventHandlers(store),
+  },
 };
 
 export const ActionMethodsWithConfig = {
@@ -68,7 +81,7 @@ export type EditorStore = SubscriberAndCallbacksFor<
 >;
 
 export const useEditorStore = (
-  options,
+  options: Partial<Options>,
   patchListener: PatchListener<
     EditorState,
     typeof ActionMethodsWithConfig,
@@ -79,7 +92,10 @@ export const useEditorStore = (
     ActionMethodsWithConfig,
     {
       ...editorInitialState,
-      options,
+      options: {
+        ...editorInitialState.options,
+        ...options,
+      },
     },
     QueryMethods,
     patchListener

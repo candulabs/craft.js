@@ -1,3 +1,4 @@
+// TODO: deprecate in favor of testUtils
 export const createTestNode = (id, data, config: any = {}) => {
   return {
     ...config,
@@ -7,6 +8,8 @@ export const createTestNode = (id, data, config: any = {}) => {
       custom: {},
       hidden: false,
       isCanvas: false,
+      nodes: [],
+      linkedNodes: {},
       ...data,
     },
     related: {},
