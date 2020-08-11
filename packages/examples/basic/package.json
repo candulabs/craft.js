@@ -1,9 +1,9 @@
 {
   "name": "example-basic",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "private": true,
   "dependencies": {
-    "@candulabs/craft-core": "^0.8.1",
+    "@candulabs/craft-core": "^0.8.2",
     "@material-ui/core": "latest",
     "clsx": "latest",
     "copy-to-clipboard": "^3.2.0",
