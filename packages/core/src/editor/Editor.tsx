@@ -2,24 +2,10 @@ import React, { useEffect } from 'react';
 import { HISTORY_ACTIONS } from '@candulabs/craft-utils';
 
 import { Options } from '../interfaces';
-import { DefaultEventHandlers, Events } from '../events';
+import { Events } from '../events';
 
 import { useEditorStore } from './store';
 import { EditorContext } from './EditorContext';
-
-export const withDefaults = (options: Partial<Options> = {}) => ({
-  onNodesChange: () => null,
-  onRender: ({ render }) => render,
-  resolver: {},
-  nodes: null,
-  enabled: true,
-  indicator: {
-    error: 'red',
-    success: 'rgb(98, 196, 98)',
-  },
-  handlers: (store) => new DefaultEventHandlers(store),
-  ...options,
-});
 
 /**
  * A React Component that provides the Editor context
@@ -30,7 +16,7 @@ export const Editor: React.FC<Partial<Options>> = ({
   ...options
 }) => {
   const context = useEditorStore(
-    withDefaults(options),
+    options,
     (_, previousState, actionPerformedWithPatches, query, normaliser) => {
       if (!actionPerformedWithPatches) {
         return;

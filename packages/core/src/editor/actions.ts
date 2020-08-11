@@ -25,6 +25,7 @@ import { fromEntries } from '../utils/fromEntries';
 import { removeNodeFromEvents } from '../utils/removeNodeFromEvents';
 import invariant from 'tiny-invariant';
 import { getNodesFromSelector } from '../utils/getNodesFromSelector';
+import { editorInitialState } from './store';
 
 export const Actions = (
   state: EditorState,
@@ -230,7 +231,6 @@ export const Actions = (
         }
 
         state.nodes[targetId].data.parent = newParentId;
-        state.nodes[targetId].data.index = index;
         currentParentNodes.splice(currentParentNodes.indexOf('marked'), 1);
       });
     },
@@ -251,8 +251,8 @@ export const Actions = (
      * Resets all the editor state.
      */
     reset() {
-      this.replaceNodes({});
-      this.clearEvents();
+      state.nodes = {};
+      state.events = editorInitialState.events;
     },
 
     /**
