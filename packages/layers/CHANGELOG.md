@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# 0.9.0 (2020-08-12)
+
+
+### Features
+
+* improve multiselect support ([#37](https://github.com/prevwong/craft.js/issues/37)) ([5ee981d](https://github.com/prevwong/craft.js/commit/5ee981d561ae4680334db3b5a959763ddbcf124a))
+
+
+
+
+
 ## 0.8.2 (2020-08-11)
 
 **Note:** Version bump only for package @candulabs/craft-layers
