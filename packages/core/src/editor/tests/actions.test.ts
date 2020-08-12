@@ -1,5 +1,5 @@
 import mapValues from 'lodash/mapValues';
-import * as actions from '../actions';
+import { ActionMethods } from '../actions';
 import { produce } from 'immer';
 import { QueryMethods } from '../../editor/query';
 import { EditorState } from '@candulabs/craft-core';
@@ -12,7 +12,7 @@ import {
 
 const Actions = (state) => (cb) =>
   produce<EditorState>(state, (draft) =>
-    cb(actions.Actions(draft as any, QueryMethods(state) as any))
+    cb(ActionMethods(draft as any, QueryMethods(state)))
   );
 
 describe('actions.add', () => {

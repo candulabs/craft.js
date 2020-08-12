@@ -3,7 +3,7 @@ import {
   SubscriberAndCallbacksFor,
   PatchListener,
 } from '@candulabs/craft-utils';
-import { Actions } from './actions';
+import { ActionMethods } from './actions';
 import { QueryMethods } from './query';
 import { EditorState, NodeEventTypes, NodeId, Options } from '../interfaces';
 import { DefaultEventHandlers } from '../events';
@@ -32,7 +32,7 @@ export const editorInitialState = {
 };
 
 export const ActionMethodsWithConfig = {
-  methods: Actions,
+  methods: ActionMethods,
   ignoreHistoryForActions: [
     'setDOM',
     'setNodeEvent',
