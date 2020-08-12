@@ -89,7 +89,7 @@ export const deserializeNode = (
     isCanvas: !!isCanvas,
     hidden: !!hidden,
     parent,
-    ...(linkedNodes ? { linkedNodes } : {}),
-    ...(nodes ? { nodes } : {}),
+    linkedNodes: linkedNodes || {},
+    nodes: nodes || [],
   };
 };
