@@ -26,10 +26,18 @@ export const Editor: React.FC<Partial<Options>> = ({
 
       for (let i = 0; i < patches.length; i++) {
         const { path } = patches[i];
+        let actionType = actionPerformed.type;
+        const noNormalize = [
+          HISTORY_ACTIONS.UNDO,
+          HISTORY_ACTIONS.REDO,
+        ].includes(actionType);
+
+        if (noNormalize) {
+          continue;
+        }
+
         const isModifyingNodeData =
           path.length > 2 && path[0] === 'nodes' && path[2] === 'data';
-
-        let actionType = actionPerformed.type;
 
         if (
           [HISTORY_ACTIONS.IGNORE, HISTORY_ACTIONS.THROTTLE].includes(
