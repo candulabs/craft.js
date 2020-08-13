@@ -34,7 +34,7 @@ export const serializeComp = (
 
   return {
     type: reduceType(type, resolver),
-    ...(isCanvas && { isCanvas }),
+    isCanvas: !!isCanvas,
     props,
   };
 };

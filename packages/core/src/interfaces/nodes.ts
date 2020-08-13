@@ -45,11 +45,11 @@ export type NodeData = {
   name: string;
   displayName: string;
   isCanvas: boolean;
-  parent: NodeId | null;
+  parent: NodeId;
   linkedNodes: Record<string, NodeId>;
   nodes: NodeId[];
   hidden: boolean;
-  custom: Record<string, any>;
+  custom?: any;
   _childCanvas?: Record<string, NodeId>; // TODO: Deprecate in favour of linkedNodes
 };
 
