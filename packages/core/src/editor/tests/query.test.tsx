@@ -200,22 +200,4 @@ describe('query', () => {
       });
     });
   });
-
-  describe('getCommonProperties', () => {
-    describe('when property is common across nodes', () => {
-      it('should return common property', () => {
-        expect(
-          query.getCommonProperties(['a', 'b'], (node) => node.data.props.color)
-        ).toBe('#fff');
-      });
-    });
-
-    describe('when property is different across nodes', () => {
-      it('should return null', () => {
-        expect(
-          query.getCommonProperties(['a', 'b'], (node) => node.data.props.bg)
-        ).toBe(null);
-      });
-    });
-  });
 });
