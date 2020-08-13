@@ -209,8 +209,7 @@ export const Actions = (
       });
 
       const newParent = state.nodes[newParentId];
-
-      targets.forEach(({ node: targetNode }) => {
+      targets.forEach(({ node: targetNode }, i) => {
         const targetId = targetNode.id;
         const currentParentId = targetNode.data.parent;
 
@@ -223,7 +222,7 @@ export const Actions = (
 
         currentParentNodes[currentParentNodes.indexOf(targetId)] = 'marked';
 
-        newParent.data.nodes.splice(index, 0, targetId);
+        newParent.data.nodes.splice(index + i, 0, targetId);
 
         state.nodes[targetId].data.parent = newParentId;
         currentParentNodes.splice(currentParentNodes.indexOf('marked'), 1);
