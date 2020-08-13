@@ -44,11 +44,10 @@ export type NodeData = {
   type: string | React.ElementType;
   name: string;
   displayName: string;
-  isCanvas?: boolean;
+  isCanvas: boolean;
   parent: NodeId;
-  index?: number;
-  linkedNodes?: Record<string, NodeId>;
-  nodes?: NodeId[];
+  linkedNodes: Record<string, NodeId>;
+  nodes: NodeId[];
   hidden: boolean;
   custom?: any;
   _childCanvas?: Record<string, NodeId>; // TODO: Deprecate in favour of linkedNodes
@@ -67,7 +66,7 @@ export type ReduceCompType =
 
 export type ReducedComp = {
   type: ReduceCompType;
-  isCanvas?: boolean;
+  isCanvas: boolean;
   props: any;
 };
 

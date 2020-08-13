@@ -209,26 +209,20 @@ export const ActionMethods = (
       });
 
       const newParent = state.nodes[newParentId];
-      const newParentNodes = newParent.data.nodes;
-
-      targets.forEach(({ node: targetNode, exists }) => {
+      targets.forEach(({ node: targetNode }, i) => {
         const targetId = targetNode.id;
-        const currentParentId = targetNode.data.parent!;
+        const currentParentId = targetNode.data.parent;
 
         query.node(newParentId).isDroppable([targetId], (err) => {
           throw new Error(err);
         });
 
         const currentParent = state.nodes[currentParentId];
-        const currentParentNodes = currentParent.data.nodes!;
+        const currentParentNodes = currentParent.data.nodes;
 
         currentParentNodes[currentParentNodes.indexOf(targetId)] = 'marked';
 
-        if (newParentNodes) {
-          newParentNodes.splice(index, 0, targetId);
-        } else {
-          newParent.data.nodes = [targetId];
-        }
+        newParent.data.nodes.splice(index + i, 0, targetId);
 
         state.nodes[targetId].data.parent = newParentId;
         currentParentNodes.splice(currentParentNodes.indexOf('marked'), 1);

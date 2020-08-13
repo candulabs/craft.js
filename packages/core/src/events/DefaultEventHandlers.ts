@@ -60,11 +60,7 @@ export class DefaultEventHandlers extends CoreEventHandlers {
                     const ancestors = query.node(selectedId).ancestors(true);
 
                     // Deselect ancestors/descendants
-                    if (
-                      descendants.includes(id) ||
-                      ancestors.includes(id) ||
-                      selectedId === id
-                    ) {
+                    if (descendants.includes(id) || ancestors.includes(id)) {
                       return false;
                     }
 
@@ -73,7 +69,9 @@ export class DefaultEventHandlers extends CoreEventHandlers {
                 );
               }
 
-              newSelectedElementIds.push(id);
+              if (!newSelectedElementIds.includes(id)) {
+                newSelectedElementIds.push(id);
+              }
 
               this.store.actions.setNodeEvent(
                 'selected',
