@@ -1,5 +1,4 @@
 import React from 'react';
-import isEqualWith from 'lodash.isequalwith';
 import {
   EditorState,
   Indicator,
