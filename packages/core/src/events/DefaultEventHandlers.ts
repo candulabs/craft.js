@@ -28,49 +28,73 @@ export class DefaultEventHandlers extends CoreEventHandlers {
     };
   }
 
+  // Safely run handler if Node Id exists
+  defineNodeEventListener(
+    eventName: string,
+    handler: (e: CraftDOMEvent<Event>, id: NodeId) => void,
+    capture?: boolean
+  ) {
+    return defineEventListener(
+      eventName,
+      (e: CraftDOMEvent<Event>, id: NodeId) => {
+        if (id) {
+          const node = this.store.query.node(id).get();
+          if (!node) {
+            return;
+          }
+        }
+
+        handler(e, id);
+      },
+      capture
+    );
+  }
+
   handlers() {
     return {
       select: {
         init: () => () => this.store.actions.setNodeEvent('selected', null),
         events: [
-          defineEventListener(
+          this.defineNodeEventListener(
             'mousedown',
             (e: CraftDOMEvent<MouseEvent>, id: NodeId) => {
               e.craft.stopPropagation();
 
-              const { query } = this.store;
-              const selectedElementIds = query.getEvent('selected').all();
-              const isMultiSelect = this.options.isMultiSelectEnabled(e);
-
               let newSelectedElementIds = [];
 
-              /**
-               * Retain the previously select elements if the multi-select condition is enabled
-               * or if the currentNode is already selected
-               *
-               * so users can just click to drag the selected elements around without holding the multi-select key
-               */
+              if (id) {
+                const { query } = this.store;
+                const selectedElementIds = query.getEvent('selected').all();
+                const isMultiSelect = this.options.isMultiSelectEnabled(e);
 
-              if (isMultiSelect || selectedElementIds.includes(id)) {
-                newSelectedElementIds = selectedElementIds.filter(
-                  (selectedId) => {
-                    const descendants = query
-                      .node(selectedId)
-                      .descendants(true);
-                    const ancestors = query.node(selectedId).ancestors(true);
+                /**
+                 * Retain the previously select elements if the multi-select condition is enabled
+                 * or if the currentNode is already selected
+                 *
+                 * so users can just click to drag the selected elements around without holding the multi-select key
+                 */
 
-                    // Deselect ancestors/descendants
-                    if (descendants.includes(id) || ancestors.includes(id)) {
-                      return false;
+                if (isMultiSelect || selectedElementIds.includes(id)) {
+                  newSelectedElementIds = selectedElementIds.filter(
+                    (selectedId) => {
+                      const descendants = query
+                        .node(selectedId)
+                        .descendants(true);
+                      const ancestors = query.node(selectedId).ancestors(true);
+
+                      // Deselect ancestors/descendants
+                      if (descendants.includes(id) || ancestors.includes(id)) {
+                        return false;
+                      }
+
+                      return true;
                     }
+                  );
+                }
 
-                    return true;
-                  }
-                );
-              }
-
-              if (!newSelectedElementIds.includes(id)) {
-                newSelectedElementIds.push(id);
+                if (!newSelectedElementIds.includes(id)) {
+                  newSelectedElementIds.push(id);
+                }
               }
 
               this.store.actions.setNodeEvent(
@@ -79,44 +103,47 @@ export class DefaultEventHandlers extends CoreEventHandlers {
               );
             }
           ),
-          defineEventListener('click', (e: CraftDOMEvent<MouseEvent>, id) => {
-            e.craft.stopPropagation();
+          this.defineNodeEventListener(
+            'click',
+            (e: CraftDOMEvent<MouseEvent>, id) => {
+              e.craft.stopPropagation();
 
-            const { query } = this.store;
-            const selectedElementIds = query.getEvent('selected').all();
+              const { query } = this.store;
+              const selectedElementIds = query.getEvent('selected').all();
 
-            const isMultiSelect = this.options.isMultiSelectEnabled(e);
-            const isNodePreviouslySelected = this.currentSelectedElementIds.includes(
-              id
-            );
-
-            let newSelectedElementIds = [...selectedElementIds];
-
-            if (isMultiSelect && isNodePreviouslySelected) {
-              newSelectedElementIds.splice(
-                newSelectedElementIds.indexOf(id),
-                1
+              const isMultiSelect = this.options.isMultiSelectEnabled(e);
+              const isNodePreviouslySelected = this.currentSelectedElementIds.includes(
+                id
               );
-              this.store.actions.setNodeEvent(
-                'selected',
-                newSelectedElementIds
-              );
-            } else if (!isMultiSelect && selectedElementIds.length > 1) {
-              newSelectedElementIds = [id];
-              this.store.actions.setNodeEvent(
-                'selected',
-                newSelectedElementIds
-              );
+
+              let newSelectedElementIds = [...selectedElementIds];
+
+              if (isMultiSelect && isNodePreviouslySelected) {
+                newSelectedElementIds.splice(
+                  newSelectedElementIds.indexOf(id),
+                  1
+                );
+                this.store.actions.setNodeEvent(
+                  'selected',
+                  newSelectedElementIds
+                );
+              } else if (!isMultiSelect && selectedElementIds.length > 1) {
+                newSelectedElementIds = [id];
+                this.store.actions.setNodeEvent(
+                  'selected',
+                  newSelectedElementIds
+                );
+              }
+
+              this.currentSelectedElementIds = newSelectedElementIds;
             }
-
-            this.currentSelectedElementIds = newSelectedElementIds;
-          }),
+          ),
         ],
       },
       hover: {
         init: () => () => this.store.actions.setNodeEvent('hovered', null),
         events: [
-          defineEventListener(
+          this.defineNodeEventListener(
             'mouseover',
             (e: CraftDOMEvent<MouseEvent>, id: NodeId) => {
               e.craft.stopPropagation();
@@ -131,7 +158,7 @@ export class DefaultEventHandlers extends CoreEventHandlers {
             e.craft.stopPropagation();
             e.preventDefault();
           }),
-          defineEventListener(
+          this.defineNodeEventListener(
             'dragenter',
             (e: CraftDOMEvent<MouseEvent>, targetId: NodeId) => {
               e.craft.stopPropagation();
@@ -176,7 +203,7 @@ export class DefaultEventHandlers extends CoreEventHandlers {
           return () => el.setAttribute('draggable', 'false');
         },
         events: [
-          defineEventListener(
+          this.defineNodeEventListener(
             'dragstart',
             (e: CraftDOMEvent<DragEvent>, id: NodeId) => {
               e.craft.stopPropagation();
