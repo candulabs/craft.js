@@ -19,6 +19,7 @@ import {
   QueryCallbacksFor,
   ERROR_NOPARENT,
   ERROR_DELETE_TOP_LEVEL_NODE,
+  CallbacksFor,
 } from '@candulabs/craft-utils';
 import { QueryMethods } from './query';
 import { fromEntries } from '../utils/fromEntries';
@@ -27,7 +28,7 @@ import invariant from 'tiny-invariant';
 import { getNodesFromSelector } from '../utils/getNodesFromSelector';
 import { editorInitialState } from './store';
 
-export const ActionMethods = (
+const Methods = (
   state: EditorState,
   query: QueryCallbacksFor<typeof QueryMethods>
 ) => {
@@ -160,21 +161,32 @@ export const ActionMethods = (
      * Delete a Node
      * @param id
      */
-    delete(id: NodeId) {
-      invariant(!query.node(id).isTopLevelNode(), ERROR_DELETE_TOP_LEVEL_NODE);
+    delete(selector: NodeSelector<NodeSelectorType.Id>) {
+      const targets = getNodesFromSelector(state.nodes, selector, {
+        existOnly: true,
+        idOnly: true,
+      });
 
-      const targetNode = state.nodes[id];
-      if (targetNode.data.nodes) {
-        // we deep clone here because otherwise immer will mutate the node
-        // object as we remove nodes
-        [...targetNode.data.nodes].forEach((childId) => this.delete(childId));
-      }
+      targets.forEach(({ node }) => {
+        const id = node.id;
+        invariant(
+          !query.node(id).isTopLevelNode(),
+          ERROR_DELETE_TOP_LEVEL_NODE
+        );
 
-      const parentChildren = state.nodes[targetNode.data.parent].data.nodes;
-      parentChildren.splice(parentChildren.indexOf(id), 1);
+        const targetNode = state.nodes[id];
+        if (targetNode.data.nodes) {
+          // we deep clone here because otherwise immer will mutate the node
+          // object as we remove nodes
+          [...targetNode.data.nodes].forEach((childId) => this.delete(childId));
+        }
 
-      removeNodeFromEvents(state, id);
-      delete state.nodes[id];
+        const parentChildren = state.nodes[targetNode.data.parent].data.nodes;
+        parentChildren.splice(parentChildren.indexOf(id), 1);
+
+        removeNodeFromEvents(state, id);
+        delete state.nodes[id];
+      });
     },
 
     deserialize(input: SerializedNodes | string) {
@@ -355,8 +367,36 @@ export const ActionMethods = (
       targets.forEach(({ node }) => cb(state.nodes[node.id].data.props));
     },
 
-    setState(cb) {
-      cb(state);
+    selectNode(nodeIdSelector?: NodeSelector<NodeSelectorType.Id>) {
+      if (nodeIdSelector) {
+        const targets = getNodesFromSelector(state.nodes, nodeIdSelector, {
+          idOnly: true,
+          existOnly: true,
+        });
+
+        this.setNodeEvent(
+          'selected',
+          targets.map(({ node }) => node.id)
+        );
+      } else {
+        this.setNodeEvent('selected', null);
+      }
+
+      this.setNodeEvent('hovered', null);
+    },
+  };
+};
+
+export const ActionMethods = (
+  state: EditorState,
+  query: QueryCallbacksFor<typeof QueryMethods>
+) => {
+  return {
+    ...Methods(state, query),
+    setState(
+      cb: (state: EditorState, actions: CallbacksFor<typeof Methods>) => void
+    ) {
+      cb(state, this);
     },
   };
 };
