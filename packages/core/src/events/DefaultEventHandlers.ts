@@ -112,13 +112,13 @@ export class DefaultEventHandlers extends CoreEventHandlers {
               const selectedElementIds = query.getEvent('selected').all();
 
               const isMultiSelect = this.options.isMultiSelectEnabled(e);
-              const isNodePreviouslySelected = this.currentSelectedElementIds.includes(
+              const isNodeAlreadySelected = this.currentSelectedElementIds.includes(
                 id
               );
 
               let newSelectedElementIds = [...selectedElementIds];
 
-              if (isMultiSelect && isNodePreviouslySelected) {
+              if (isMultiSelect && isNodeAlreadySelected) {
                 newSelectedElementIds.splice(
                   newSelectedElementIds.indexOf(id),
                   1

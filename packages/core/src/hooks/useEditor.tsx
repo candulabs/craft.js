@@ -9,7 +9,6 @@ import {
   useInternalEditorReturnType,
 } from '../editor/useInternalEditor';
 import { useMemo } from 'react';
-import { NodeId } from '../interfaces';
 
 type PrivateActions =
   | 'addLinkedNodeFromTree'
@@ -89,7 +88,7 @@ export function useEditor<S>(collect?: any): useEditorReturnType<S> {
           getPublicActions(EditorActions.history.throttle(...args)),
       },
     };
-  }, [EditorActions, internalActions]);
+  }, [EditorActions]);
 
   return {
     connectors,
