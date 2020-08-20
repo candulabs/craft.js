@@ -9,7 +9,6 @@ import {
   useInternalEditorReturnType,
 } from '../editor/useInternalEditor';
 import { useMemo } from 'react';
-import { NodeId } from '../interfaces';
 
 type PrivateActions =
   | 'addLinkedNodeFromTree'
@@ -53,9 +52,7 @@ export type WithoutPrivateActions<S = null> = Delete<
 export type useEditorReturnType<S = null> = Overwrite<
   useInternalEditorReturnType<S>,
   {
-    actions: WithoutPrivateActions & {
-      selectNode: (nodeId: NodeId | null) => void;
-    };
+    actions: WithoutPrivateActions;
     query: Delete<useInternalEditorReturnType<S>['query'], 'deserialize'>;
   }
 >;
@@ -83,10 +80,6 @@ export function useEditor<S>(collect?: any): useEditorReturnType<S> {
   const actions = useMemo(() => {
     return {
       ...EditorActions,
-      selectNode: (nodeId: NodeId | null) => {
-        internalActions.setNodeEvent('selected', nodeId);
-        internalActions.setNodeEvent('hovered', null);
-      },
       history: {
         ...EditorActions.history,
         ignore: (...args) =>
@@ -95,7 +88,7 @@ export function useEditor<S>(collect?: any): useEditorReturnType<S> {
           getPublicActions(EditorActions.history.throttle(...args)),
       },
     };
-  }, [EditorActions, internalActions]);
+  }, [EditorActions]);
 
   return {
     connectors,

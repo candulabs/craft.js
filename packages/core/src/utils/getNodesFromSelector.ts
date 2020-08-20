@@ -16,27 +16,29 @@ export const getNodesFromSelector = (
     ...(config || {}),
   };
 
-  const nodeSelectors = items.map((item) => {
-    if (typeof item === 'string') {
-      return {
-        node: nodes[item],
-        exists: !!nodes[item],
-      };
-    }
+  const nodeSelectors = items
+    .filter((item) => !!item)
+    .map((item) => {
+      if (typeof item === 'string') {
+        return {
+          node: nodes[item],
+          exists: !!nodes[item],
+        };
+      }
 
-    if (typeof item === 'object' && !mergedConfig.idOnly) {
-      const node = item as Node;
-      return {
-        node,
-        exists: !!nodes[node.id],
-      };
-    }
+      if (typeof item === 'object' && !mergedConfig.idOnly) {
+        const node = item as Node;
+        return {
+          node,
+          exists: !!nodes[node.id],
+        };
+      }
 
-    return {
-      node: null,
-      exists: false,
-    };
-  });
+      return {
+        node: null,
+        exists: false,
+      };
+    });
 
   if (mergedConfig.existOnly) {
     invariant(
