@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# 0.10.0 (2020-08-20)
+
+
+### Features
+
+* multi delete ([#43](https://github.com/candulabs/craft.js/issues/43)) ([8af9fa1](https://github.com/candulabs/craft.js/commit/8af9fa1d99fb4ce8332d514a44591b1dad6f47bb))
+
+
+
+
+
 ## 0.9.2 (2020-08-13)
 
 **Note:** Version bump only for package @candulabs/craft-core
