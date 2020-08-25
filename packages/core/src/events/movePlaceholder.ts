@@ -33,7 +33,9 @@ export default function movePlaceholder(
       w =
         canvasDOMInfo.outerWidth -
         canvasDOMInfo.padding.right -
-        canvasDOMInfo.padding.left;
+        canvasDOMInfo.padding.left -
+        canvasDOMInfo.margin.left -
+        canvasDOMInfo.margin.right;
       h = 2;
     }
   }
