@@ -36,6 +36,7 @@ export const ActionMethodsWithConfig = {
   ignoreHistoryForActions: [
     'setDOM',
     'setNodeEvent',
+    'selectNode',
     'clearEvents',
     'setOptions',
     'setIndicator',
