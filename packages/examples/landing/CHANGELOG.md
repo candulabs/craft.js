@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.10.2 (2020-09-02)
+
+
+### Bug Fixes
+
+* ignore select node ([#45](https://github.com/candulabs/craft.js/issues/45)) ([76c783b](https://github.com/candulabs/craft.js/commit/76c783b92f5d5a3be44f8d17552ba480fd8890cf))
+
+
+
+
+
 ## 0.10.1 (2020-08-25)
 
 **Note:** Version bump only for package example-landing
