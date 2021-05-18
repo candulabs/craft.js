@@ -1,4 +1,4 @@
-import { NodeId } from '@craftjs/core';
+import { NodeId } from '@candulabs/craft';
 import React from 'react';
 import { Node, Range } from 'slate';
 

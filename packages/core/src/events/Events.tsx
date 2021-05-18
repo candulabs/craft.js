@@ -1,4 +1,4 @@
-import { RenderIndicator, getDOMInfo } from '@craftjs/utils';
+import { RenderIndicator, getDOMInfo } from '@candulabs/craft-utils';
 import React, { useEffect, useRef } from 'react';
 
 import { EventHandlerContext } from './EventContext';

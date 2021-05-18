@@ -1,4 +1,4 @@
-import { deprecationWarning, ROOT_NODE } from '@craftjs/utils';
+import { deprecationWarning, ROOT_NODE } from '@candulabs/craft-utils';
 import React, { useEffect, useState, useRef } from 'react';
 
 import { useInternalEditor } from '../editor/useInternalEditor';

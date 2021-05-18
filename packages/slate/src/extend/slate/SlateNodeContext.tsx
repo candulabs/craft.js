@@ -1,4 +1,4 @@
-import { useNode } from '@craftjs/core';
+import { useNode } from '@candulabs/craft';
 import React, { createContext, useMemo, useRef, useState } from 'react';
 import { Node, Range, Transforms } from 'slate';
 import { ReactEditor, Slate } from 'slate-react';

@@ -1,4 +1,4 @@
-import { deprecationWarning } from '@craftjs/utils';
+import { deprecationWarning } from '@candulabs/craft-utils';
 
 import { Node } from '../interfaces';
 import {

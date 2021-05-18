@@ -1,6 +1,6 @@
 {
-  "name": "@craftjs/core",
-  "version": "0.2.0-alpha.23",
+  "name": "@candulabs/craft",
+  "version": "0.10.2",
   "description": "A React Framework for building extensible drag and drop page editors",
   "keywords": [
     "react",
@@ -16,14 +16,14 @@
     "html"
   ],
   "author": "Prev Wong <prevwong@gmail.com>",
-  "homepage": "https://github.com/prevwong/craft.js/",
+  "homepage": "https://github.com/candulabs/craft.js/",
   "license": "MIT",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./lib/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/prevwong/craft.js/"
+    "url": "git@github.com:candulabs/craft.js.git"
   },
   "scripts": {
     "start": "cross-env NODE_ENV=development ../../scripts/build.sh",
@@ -31,11 +31,8 @@
     "dev:yalc": "../../scripts/yalc.sh",
     "clean": "rimraf lib dist"
   },
-  "bugs": {
-    "url": "https://github.com/prevwong/craft.js/issues"
-  },
   "dependencies": {
-    "@craftjs/utils": "^0.2.0-alpha.23",
+    "@candulabs/craft-utils": "^0.10.2",
     "@types/react": "^16.9.11",
     "debounce": "^1.2.0",
     "lodash": "^4.17.20",

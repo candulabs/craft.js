@@ -8,7 +8,7 @@
     "dev:all": "run-p dev dev:docs",
     "dev:yalc": "lerna run dev:yalc --parallel",
     "clean": "lerna run clean --stream",
-    "build": "lerna run build --stream --ignore docs --ignore example-*",
+    "build": "lerna run build --stream",
     "build:all": "lerna run build --stream",
     "deploy": "cross-env ENV=production ./scripts/deploy.sh",
     "deploy:staging": "cross-env ENV=staging ./scripts/deploy.sh",
@@ -72,8 +72,7 @@
   },
   "workspaces": {
     "packages": [
-      "packages/*",
-      "packages/examples/*"
+      "packages/*"
     ]
   },
   "dependencies": {
@@ -84,7 +83,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/prevwong/craft.js.git"
+    "url": "git@github.com:candulabs/craft.js.git"
   },
   "jest": {
     "setupFilesAfterEnv": [

@@ -3,7 +3,7 @@ import {
   QueryCallbacksFor,
   wrapConnectorHooks,
   ChainableConnectors,
-} from '@craftjs/utils';
+} from '@candulabs/craft-utils';
 import React, { useContext, useMemo } from 'react';
 
 import { EditorContext } from './EditorContext';

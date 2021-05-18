@@ -1,4 +1,4 @@
-import { createTestState } from '@craftjs/core';
+import { createTestState } from '@candulabs/craft';
 
 import { wrapRogueElement } from '../wrapRogueElement';
 

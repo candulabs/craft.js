@@ -1,5 +1,5 @@
 /* eslint-disable no-param-reassign */
-import { EditorState, Node } from '@craftjs/core';
+import { EditorState, Node } from '@candulabs/craft';
 import forIn from 'lodash/forIn';
 
 import deleteNodes from './deleteNodes';

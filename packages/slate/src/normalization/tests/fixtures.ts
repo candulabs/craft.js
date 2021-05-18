@@ -1,4 +1,4 @@
-import { createTestState } from '@craftjs/core';
+import { createTestState } from '@candulabs/craft';
 
 export const rootTypographyNodes = {
   T1: {

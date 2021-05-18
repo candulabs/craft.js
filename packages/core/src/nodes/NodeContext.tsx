@@ -1,4 +1,7 @@
-import { ChainableConnectors, wrapConnectorHooks } from '@craftjs/utils';
+import {
+  ChainableConnectors,
+  wrapConnectorHooks,
+} from '@candulabs/craft-utils';
 import React, { useMemo } from 'react';
 
 import { useEventHandler } from '../events';

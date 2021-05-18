@@ -8,7 +8,7 @@ import {
   ERROR_DELETE_TOP_LEVEL_NODE,
   CallbacksFor,
   Delete,
-} from '@craftjs/utils';
+} from '@candulabs/craft-utils';
 import invariant from 'tiny-invariant';
 
 import { QueryMethods } from './query';
